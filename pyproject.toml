@@ -21,6 +21,11 @@ responses = "^0.25.3"
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "-ra -q"
+markers = [
+    "slow: marks tests as slow",
+    "unit: marks tests as unit tests",
+    "integration: marks tests as integration tests"
+]
 pythonpath = [
     ".",
     "yanara",
