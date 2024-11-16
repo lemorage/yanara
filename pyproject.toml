@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "yanara"
 version = "0.1.0"
-description = ""
+description = "An infinite-memory multi-agent system, controlled by a single delegator yanara"
 authors = ["lemorage <one.lemorage@gmail.com>"]
 readme = "README.md"
 
@@ -13,7 +13,7 @@ rich = "^13.9.4"
 
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.7.3"
+pre-commit = "^4.0.1"
 
 [build-system]
 requires = ["poetry-core"]
