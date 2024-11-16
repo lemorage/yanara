@@ -1,16 +1,16 @@
 from typing import Any, Dict, Optional
 
-import requests
+import httpx
 
 
-def request(
+async def request(
     url: str,
     data: Optional[Dict[str, Any]] = None,
     options: Optional[Dict[str, Any]] = None,
     axios_options: Optional[Dict[str, Any]] = None,
 ) -> Any:
     """
-    Send an HTTP request to a specified URL with optional custom parameters.
+    Send an asynchronous HTTP request to a specified URL with optional custom parameters.
 
     Parameters:
     - url (str): The URL to send the request to.
@@ -23,61 +23,53 @@ def request(
 
     Raises:
     - ValueError: If an unsupported HTTP method is provided.
-    - requests.RequestException: If the request fails (timeout, network issues, etc.).
+    - httpx.RequestError: If the request fails (timeout, network issues, etc.).
     """
-    options = options or {}
-    axios_options = axios_options or {}
 
+    options = options or {}
+    method = options.get("method", "POST").upper()
+
+    axios_options = axios_options or {}
     default_axios_options = {"timeout": 60, "proxy": None, "httpsAgent": None}
     merged_axios_options = {**default_axios_options, **axios_options}
 
-    # Get the method (GET, POST, PUT), default to POST
-    method = options.get("method", "POST").upper()
+    # Prepare request parameters
+    params = {"url": url, "timeout": merged_axios_options["timeout"], "proxies": merged_axios_options["proxy"]}
 
-    request_params = {"url": url, "timeout": merged_axios_options["timeout"], "proxies": merged_axios_options["proxy"]}
-
+    # Handle GET request
     if method == "GET":
-        return _get_request(request_params)
+        return await _get_request(params)
+
+    # Handle POST or PUT request
     elif method in ["POST", "PUT"]:
-        return _post_or_put_request(method, request_params, data)
+        return await _post_or_put_request(method, params, data)
+
     raise ValueError(f"Unsupported method: {method}")
 
 
-def _get_request(params: Dict[str, Any]) -> Any:
+async def _get_request(params: Dict[str, Any]) -> Any:
     """
-    Perform a GET request with the given parameters.
-
-    Parameters:
-    - params (Dict[str, Any]): A dictionary containing URL, timeout, and proxy settings.
-
-    Returns:
-    - Any: The response of the GET request, assumed to be a JSON object.
+    Perform an asynchronous GET request with the given parameters.
     """
     try:
-        response = requests.get(params["url"], timeout=params["timeout"], proxies=params["proxies"])
-        response.raise_for_status()
-        return response.json()
-    except requests.RequestException as e:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(params["url"], timeout=params["timeout"], proxies=params["proxies"])
+            response.raise_for_status()
+            return response.json()
+    except httpx.RequestError as e:
         raise ValueError(f"GET request failed: {e}")
 
 
-def _post_or_put_request(method: str, params: Dict[str, Any], data: Optional[Dict[str, Any]]) -> Any:
+async def _post_or_put_request(method: str, params: Dict[str, Any], data: Optional[Dict[str, Any]]) -> Any:
     """
-    Perform a POST or PUT request with the given parameters.
-
-    Parameters:
-    - method (str): The HTTP method ('POST' or 'PUT').
-    - params (Dict[str, Any]): A dictionary containing URL, timeout, and proxy settings.
-    - data (Optional[Dict[str, Any]]): The data to send in the request body.
-
-    Returns:
-    - Any: The response of the POST/PUT request, assumed to be a JSON object.
+    Perform an asynchronous POST or PUT request with the given parameters.
     """
     try:
-        response = requests.request(
-            method, params["url"], json=data, timeout=params["timeout"], proxies=params["proxies"]
-        )
-        response.raise_for_status()
-        return response.json()
-    except requests.RequestException as e:
+        async with httpx.AsyncClient() as client:
+            response = await client.request(
+                method, params["url"], json=data, timeout=params["timeout"], proxies=params["proxies"]
+            )
+            response.raise_for_status()
+            return response.json()
+    except httpx.RequestError as e:
         raise ValueError(f"{method} request failed: {e}")
