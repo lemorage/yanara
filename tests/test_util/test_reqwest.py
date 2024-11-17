@@ -30,7 +30,6 @@ async def test_request_get(mocker):
     mock_response.json.return_value = {"key": "value"}
     mock_response.raise_for_status = AsyncMock()
 
-    # Patch httpx.AsyncClient and mock the 'get' method
     mocker.patch.object(httpx.AsyncClient, "get", return_value=mock_response)
 
     url = "https://jsonplaceholder.typicode.com/posts"
@@ -43,7 +42,6 @@ async def test_request_get(mocker):
     # Assert: Verify the response is as expected
     assert await result == {"key": "value"}
 
-    # Ensure that get was called with the correct parameters
     httpx.AsyncClient.get.assert_called_once_with(url, timeout=60, proxies=None)
 
 
@@ -55,7 +53,6 @@ async def test_request_post(mocker):
     mock_response.json.return_value = {"id": 1, "title": "foo"}
     mock_response.raise_for_status = AsyncMock()
 
-    # Patch httpx.AsyncClient and mock the 'request' method for POST
     mocker.patch.object(httpx.AsyncClient, "request", return_value=mock_response)
 
     url = "https://jsonplaceholder.typicode.com/posts"
@@ -68,7 +65,7 @@ async def test_request_post(mocker):
 
     # Assert: Verify the response is as expected
     assert await result == {"id": 1, "title": "foo"}
-    httpx.AsyncClient.request.assert_called_once_with("POST", url, json=data, timeout=100, proxies=None)
+    httpx.AsyncClient.request.assert_called_once_with(method="POST", url=url, json=data)
 
 
 @pytest.mark.unit
@@ -86,14 +83,12 @@ async def test_request_unsupported_method():
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-# @pytest.mark.filterwarnings("ignore::RuntimeWarning")
 async def test_request_merge_axios_options(mocker):
     # Arrange: Mock the GET request using httpx.AsyncClient
     mock_response = AsyncMock()
     mock_response.json.return_value = {"key": "merged"}
     mock_response.raise_for_status = AsyncMock()
 
-    # Patch httpx.AsyncClient and mock the 'get' method
     mocker.patch.object(httpx.AsyncClient, "get", return_value=mock_response)
 
     url = "https://jsonplaceholder.typicode.com/posts"
@@ -110,14 +105,12 @@ async def test_request_merge_axios_options(mocker):
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-# @pytest.mark.filterwarnings("ignore::RuntimeWarning")
 async def test_request_default_axios_options(mocker):
     # Arrange: Mock the GET request using httpx.AsyncClient
     mock_response = AsyncMock()
     mock_response.json.return_value = {"key": "default"}
     mock_response.raise_for_status = AsyncMock()
 
-    # Patch httpx.AsyncClient and mock the 'get' method
     mocker.patch.object(httpx.AsyncClient, "get", return_value=mock_response)
 
     url = "https://jsonplaceholder.typicode.com/posts"

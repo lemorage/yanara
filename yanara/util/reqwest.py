@@ -36,18 +36,19 @@ async def request(
     # Prepare request parameters
     params = {"url": url, "timeout": merged_axios_options["timeout"], "proxies": merged_axios_options["proxy"]}
 
-    # Handle GET request
-    if method == "GET":
-        return await _get_request(params)
+    method_handlers = {
+        "GET": _get_request,
+        "POST": _post_request,
+        "PUT": _put_request,
+    }
 
-    # Handle POST or PUT request
-    elif method in ["POST", "PUT"]:
-        return await _post_or_put_request(method, params, data)
+    if method in method_handlers:
+        return await method_handlers[method](params, data)
 
     raise ValueError(f"Unsupported method: {method}")
 
 
-async def _get_request(params: Dict[str, Any]) -> Any:
+async def _get_request(params: Dict[str, Any], data: Optional[Dict[str, Any]] = None) -> Any:
     """
     Perform an asynchronous GET request with the given parameters.
     """
@@ -60,16 +61,41 @@ async def _get_request(params: Dict[str, Any]) -> Any:
         raise ValueError(f"GET request failed: {e}")
 
 
-async def _post_or_put_request(method: str, params: Dict[str, Any], data: Optional[Dict[str, Any]]) -> Any:
+async def _post_request(params: Dict[str, Any], data: Optional[Dict[str, Any]]) -> Any:
     """
-    Perform an asynchronous POST or PUT request with the given parameters.
+    Perform an asynchronous POST request with the given parameters.
+    """
+    return await _generic_request("POST", params, data)
+
+
+async def _put_request(params: Dict[str, Any], data: Optional[Dict[str, Any]]) -> Any:
+    """
+    Perform an asynchronous PUT request with the given parameters.
+    """
+    return await _generic_request("PUT", params, data)
+
+
+async def _generic_request(method: str, params: Dict[str, Any], data: Optional[Dict[str, Any]]) -> Any:
+    """
+    Perform an asynchronous HTTP request for any supported method, handling shared logic.
     """
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.request(
-                method, params["url"], json=data, timeout=params["timeout"], proxies=params["proxies"]
-            )
+        # Prepare the client options including proxies
+        client_options = {
+            "timeout": params["timeout"],
+            "proxies": params["proxies"] if params["proxies"] else None,
+        }
+
+        async with httpx.AsyncClient(**client_options) as client:
+            request_args = {
+                "method": method,
+                "url": params["url"],
+                **({"json": data} if data and method in {"POST", "PUT"} else {}),
+            }
+
+            response = await client.request(**request_args)
             response.raise_for_status()
             return response.json()
+
     except httpx.RequestError as e:
         raise ValueError(f"{method} request failed: {e}")
