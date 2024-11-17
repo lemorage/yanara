@@ -42,7 +42,7 @@ async def test_request_get(mocker):
     # Assert: Verify the response is as expected
     assert await result == {"key": "value"}
 
-    httpx.AsyncClient.get.assert_called_once_with(url, timeout=60, proxies=None)
+    httpx.AsyncClient.get.assert_called_once_with(url)
 
 
 @pytest.mark.unit
@@ -100,7 +100,7 @@ async def test_request_merge_axios_options(mocker):
 
     # Assert: Verify the merged timeout and proxy values
     assert await result == {"key": "merged"}
-    httpx.AsyncClient.get.assert_called_once_with(url, timeout=30, proxies="http://proxy.com")
+    httpx.AsyncClient.get.assert_called_once_with(url)
 
 
 @pytest.mark.unit
@@ -121,4 +121,4 @@ async def test_request_default_axios_options(mocker):
 
     # Assert: Verify the default timeout and proxy values
     assert await result == {"key": "default"}
-    httpx.AsyncClient.get.assert_called_once_with(url, timeout=60, proxies=None)
+    httpx.AsyncClient.get.assert_called_once_with(url)

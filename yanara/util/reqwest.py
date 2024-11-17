@@ -53,8 +53,13 @@ async def _get_request(params: Dict[str, Any], data: Optional[Dict[str, Any]] = 
     Perform an asynchronous GET request with the given parameters.
     """
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(params["url"], timeout=params["timeout"], proxies=params["proxies"])
+        client_options = {
+            "timeout": params["timeout"],
+            "proxy": params["proxies"] if params["proxies"] else None,
+        }
+
+        async with httpx.AsyncClient(**client_options) as client:
+            response = await client.get(params["url"])
             response.raise_for_status()
             return response.json()
     except httpx.RequestError as e:
@@ -83,7 +88,7 @@ async def _generic_request(method: str, params: Dict[str, Any], data: Optional[D
         # Prepare the client options including proxies
         client_options = {
             "timeout": params["timeout"],
-            "proxies": params["proxies"] if params["proxies"] else None,
+            "proxy": params["proxies"] if params["proxies"] else None,
         }
 
         async with httpx.AsyncClient(**client_options) as client:
