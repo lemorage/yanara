@@ -1,10 +1,33 @@
 import asyncio
+from datetime import datetime
 import json
+import signal
 from typing import Any, Dict, List, Optional
 
 import httpx
+from rich import print
 
 from yanara.util.reqwest import request
+
+# A global flag to control the loop
+stop_flag = False
+
+# def is_from_chatroom(from_wxid):
+#     return "@chatroom" in from_wxid
+
+
+# def is_mention(content, nicknames):
+#     for nickname in nicknames:
+#         if nickname in content:
+#             return True
+#     return False
+
+
+# def get_nickname(push_content, content):
+#     if content not in push_content:
+#         return push_content.replace("在群聊中@了你", "").strip()
+#     else:
+#         return push_content.replace(content, "").strip().rstrip().strip()
 
 
 # Helper function to check if there is exactly one type of incoming message
@@ -28,11 +51,12 @@ async def schedule_pulling_wechat_message() -> None:
 
             messages = result.get("Data", {}).get("AddMsgs", []) if result else []
 
+            current_time = str(datetime.now())[:-7]
             if not messages:
-                print("msg: None or empty")
+                print(f"[{current_time}]: Currently no messages.")
                 return
 
-            print("msg: ", messages)
+            print(f"[{current_time}]: ", messages)
 
             if has_incoming_message(messages):
                 from_usernames = list({item["from_user_name"]["str"] for item in messages})
@@ -80,10 +104,24 @@ async def route_message(from_wxid: str, to_wxid: str, content: str, push_content
 
 
 async def monitor_wechat_messages():
-    while True:
+    global stop_flag
+    while not stop_flag:
         await schedule_pulling_wechat_message()
         await asyncio.sleep(5)
+    print("Monitoring stopped.")
+
+
+def stop_loop(signal_received, frame):
+    """Signal handler to set the stop_flag."""
+    global stop_flag
+    stop_flag = True
+    print("Shutdown signal received. Stopping...")
 
 
 if __name__ == "__main__":
+    # Register the signal handler
+    signal.signal(signal.SIGINT, stop_loop)
+    signal.signal(signal.SIGTERM, stop_loop)
+
+    # Run the asyncio loop
     asyncio.run(monitor_wechat_messages())
