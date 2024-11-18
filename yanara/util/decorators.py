@@ -10,13 +10,15 @@ logging.basicConfig(level=logging.DEBUG, format="%(message)s", datefmt="[%X]", h
 
 def entry(fn):
     """Decorator to mark the function that starts a program."""
-    wrapped_fn = lambda *args: fn(*args) if inspect.getmodule(fn).__name__ == "__main__" else None
+    # Check if the function is being run as the main module
+    if inspect.getmodule(fn).__name__ == "__main__":
 
-    if wrapped_fn:
-        args = sys.argv[1:]
-        wrapped_fn(*args)
+        @wraps(fn)
+        def wrapped_fn(*args, **kwargs):
+            return asyncio.run(fn(*args, **kwargs)) if asyncio.iscoroutinefunction(fn) else fn(*args, **kwargs)
 
-    return wrapped_fn
+        return wrapped_fn(*sys.argv[1:])
+    return fn
 
 
 def log_function_call(fn):
