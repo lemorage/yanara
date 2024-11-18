@@ -83,16 +83,13 @@ async def schedule_pulling_wechat_message() -> None:
         print(f"Error: {str(e)}")
 
 
-# Mock helper functions to simulate the behavior
 def get_wechat_accounts() -> List[Dict[str, Any]]:
-    return [
-        {
-            "key": "",
-            "wxid": "",
-            "nicknames": [""],
-            "identifier": "",
-        },
-    ]
+    environment = os.getenv("ENVIRONMENT", "dev")
+
+    with open("configs/wechat_account_mapping.json", "r") as file:
+        data = json.load(file)
+
+    return data.get(environment, [])
 
 
 def get_wechat_agent_service_base_path() -> str:
