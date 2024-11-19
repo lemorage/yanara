@@ -19,6 +19,12 @@ class WeChatAccount:
         result = await request(url, {"Scene": 3}, {"method": "post"})
         return result.get("Data", {}).get("AddMsgs", []) if result else []
 
+    async def fetch_chatroom_info(self, chatroom_id: str) -> Dict[str, Any]:
+        """Fetches chatroom information for the given chatroom ID."""
+        url = f"{self.get_service_base_path()}/v1/chatroom/GetChatRoomInfo?key={self.key}"
+        result = await request(url, {"ChatRoomWxIdList": [chatroom_id]}, {"method": "post"})
+        return result.get("Data", {}) if result else {}
+
     @classmethod
     def is_production(cls) -> bool:
         """Check if the current environment is production."""
