@@ -9,8 +9,7 @@ from yanara.util.reqwest import request
 
 @pytest.fixture(autouse=True)
 def suppress_warnings():
-    """
-    A pytest fixture that automatically suppresses RuntimeWarnings for all tests.
+    """A pytest fixture that automatically suppresses RuntimeWarnings for all tests.
 
     The fixture works by temporarily modifying the warnings filter to ignore
     any `RuntimeWarning` that may be raised during the test execution.
@@ -25,7 +24,7 @@ def suppress_warnings():
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_request_get(mocker):
-    # Arrange: Mock the GET request using AsyncMock
+    # Arrange: Mock the GET request using AsyncMock.get
     mock_response = AsyncMock()
     mock_response.json.return_value = {"key": "value"}
     mock_response.raise_for_status = AsyncMock()
@@ -48,12 +47,12 @@ async def test_request_get(mocker):
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_request_post(mocker):
-    # Arrange: Mock the POST request using httpx.AsyncClient
+    # Arrange: Mock the POST request using httpx.AsyncClient.post
     mock_response = AsyncMock()
     mock_response.json.return_value = {"id": 1, "title": "foo"}
     mock_response.raise_for_status = AsyncMock()
 
-    mocker.patch.object(httpx.AsyncClient, "request", return_value=mock_response)
+    mocker.patch.object(httpx.AsyncClient, "post", return_value=mock_response)
 
     url = "https://jsonplaceholder.typicode.com/posts"
     data = {"title": "foo", "body": "bar", "userId": 1}
@@ -65,7 +64,30 @@ async def test_request_post(mocker):
 
     # Assert: Verify the response is as expected
     assert await result == {"id": 1, "title": "foo"}
-    httpx.AsyncClient.request.assert_called_once_with(method="POST", url=url, json=data)
+    httpx.AsyncClient.post.assert_called_once_with(url, json=data)
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_request_put(mocker):
+    # Arrange: Mock the PUT request using httpx.AsyncClient.put
+    mock_response = AsyncMock()
+    mock_response.json.return_value = {"id": 1, "title": "updated"}
+    mock_response.raise_for_status = AsyncMock()
+
+    mocker.patch.object(httpx.AsyncClient, "put", return_value=mock_response)
+
+    url = "https://jsonplaceholder.typicode.com/posts/1"
+    data = {"title": "updated", "body": "updated body", "userId": 1}
+    options = {"method": "PUT"}
+    axios_options = {"timeout": 100, "proxy": None}
+
+    # Act: Call the async function
+    result = await request(url, data, options, axios_options)
+
+    # Assert: Verify the response is as expected
+    assert await result == {"id": 1, "title": "updated"}
+    httpx.AsyncClient.put.assert_called_once_with(url, json=data)
 
 
 @pytest.mark.unit

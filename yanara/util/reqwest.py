@@ -9,23 +9,25 @@ async def request(
     options: Optional[Dict[str, Any]] = None,
     axios_options: Optional[Dict[str, Any]] = None,
 ) -> Any:
-    """
-    Send an asynchronous HTTP request to a specified URL with optional custom parameters.
+    """Send an asynchronous HTTP request to a specified URL with optional custom parameters.
 
-    Parameters:
+    Parameters
+    ----------
     - url (str): The URL to send the request to.
     - data (Optional[Dict[str, Any]]): The data to send in the request body (for POST/PUT).
     - options (Optional[Dict[str, Any]]): A dictionary containing request options, including 'method' (GET, POST, PUT).
     - axios_options (Optional[Dict[str, Any]]): Additional axios-like options for the request (e.g., timeout, proxy).
 
-    Returns:
+    Returns
+    -------
     - Any: The response of the request, assumed to be a JSON object.
 
-    Raises:
+    Raises
+    ------
     - ValueError: If an unsupported HTTP method is provided.
     - httpx.RequestError: If the request fails (timeout, network issues, etc.).
-    """
 
+    """
     options = options or {}
     method = options.get("method", "POST").upper()
 
@@ -49,9 +51,7 @@ async def request(
 
 
 async def _get_request(params: Dict[str, Any], data: Optional[Dict[str, Any]] = None) -> Any:
-    """
-    Perform an asynchronous GET request with the given parameters.
-    """
+    """Perform an asynchronous GET request with the given parameters."""
     try:
         client_options = {
             "timeout": params["timeout"],
@@ -67,40 +67,32 @@ async def _get_request(params: Dict[str, Any], data: Optional[Dict[str, Any]] = 
 
 
 async def _post_request(params: Dict[str, Any], data: Optional[Dict[str, Any]]) -> Any:
-    """
-    Perform an asynchronous POST request with the given parameters.
-    """
-    return await _generic_request("POST", params, data)
-
-
-async def _put_request(params: Dict[str, Any], data: Optional[Dict[str, Any]]) -> Any:
-    """
-    Perform an asynchronous PUT request with the given parameters.
-    """
-    return await _generic_request("PUT", params, data)
-
-
-async def _generic_request(method: str, params: Dict[str, Any], data: Optional[Dict[str, Any]]) -> Any:
-    """
-    Perform an asynchronous HTTP request for any supported method, handling shared logic.
-    """
+    """Perform an asynchronous POST request with the given parameters."""
     try:
-        # Prepare the client options including proxies
         client_options = {
             "timeout": params["timeout"],
             "proxy": params["proxies"] if params["proxies"] else None,
         }
 
         async with httpx.AsyncClient(**client_options) as client:
-            request_args = {
-                "method": method,
-                "url": params["url"],
-                **({"json": data} if data and method in {"POST", "PUT"} else {}),
-            }
-
-            response = await client.request(**request_args)
+            response = await client.post(params["url"], json=data)
             response.raise_for_status()
             return response.json()
-
     except httpx.RequestError as e:
-        raise ValueError(f"{method} request failed: {e}")
+        raise ValueError(f"POST request failed: {e}")
+
+
+async def _put_request(params: Dict[str, Any], data: Optional[Dict[str, Any]]) -> Any:
+    """Perform an asynchronous PUT request with the given parameters."""
+    try:
+        client_options = {
+            "timeout": params["timeout"],
+            "proxy": params["proxies"] if params["proxies"] else None,
+        }
+
+        async with httpx.AsyncClient(**client_options) as client:
+            response = await client.put(params["url"], json=data)
+            response.raise_for_status()
+            return response.json()
+    except httpx.RequestError as e:
+        raise ValueError(f"PUT request failed: {e}")
