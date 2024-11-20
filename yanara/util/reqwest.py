@@ -61,5 +61,20 @@ async def _http_call(url: str, axios_options: Dict[str, Any], data: Optional[Dic
             response = await method(url, json=data if data else None)
             response.raise_for_status()
             return response.json()
+
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code in {400, 401, 403}:
+            print(f"[Error]: Client error {e.response.status_code} for {url}: {e.response.text}")
+        elif e.response.status_code in {500, 502, 503, 504}:
+            print(f"[Error]: Server error {e.response.status_code} for {url}. Please try again later.")
+        else:
+            print(f"[Error]: HTTP error {e.response.status_code} for {url}: {e.response.text}")
+        return {}
     except httpx.RequestError as e:
-        raise ValueError(f"{http_method.upper()} request failed: {e}")
+        # Handle network-related issues
+        print(f"[Error]: Request error for {url}: {e}")
+        return {}
+    except Exception as e:
+        # Handle unexpected errors
+        print(f"[Error]: Unexpected error for {url}: {e}")
+        return {}
