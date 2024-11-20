@@ -47,6 +47,13 @@ repos:
         additional_dependencies:
           - tomli
 
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        args: ["--line-length", "120"]
+        files: \.py$
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.7.2
     hooks:
@@ -54,9 +61,29 @@ repos:
         args: ["--select", "I", "--fix"]
       - id: ruff-format
 
-  - repo: https://github.com/psf/black
-    rev: 24.10.0
+  - repo: local
     hooks:
-      - id: black
-        args: ["--line-length", "120"]
-        files: \.py$
+      - id: poetry-check
+        name: poetry-check
+        description: run poetry check to validate config
+        entry: poetry check
+        language: python
+        pass_filenames: false
+        files: ^(.*/)?(poetry\.lock|pyproject\.toml)$
+
+      - id: poetry-lock
+        name: poetry-lock
+        description: run poetry lock to update lock file
+        entry: poetry lock
+        language: python
+        pass_filenames: false
+        files: ^(.*/)?(poetry\.lock|pyproject\.toml)$
+
+      - id: poetry-install
+        name: poetry-install
+        description: run poetry install to install dependencies from the lock file
+        entry: poetry install
+        language: python
+        pass_filenames: false
+        stages: [post-checkout, post-merge]
+        always_run: true
