@@ -7,8 +7,6 @@ import time
 
 from rich.logging import RichHandler
 
-logging.basicConfig(level=logging.DEBUG, format="%(message)s", datefmt="[%X]", handlers=[RichHandler()])
-
 
 def entry(fn):
     """Decorator to mark the function that starts a program."""
@@ -25,6 +23,8 @@ def entry(fn):
 
 def log_function_call(fn):
     """Decorator to log function calls with dynamic logging control."""
+
+    logging.basicConfig(level=logging.DEBUG, format="%(message)s", datefmt="[%X]", handlers=[RichHandler()])
 
     def wrapper(*args, **kwargs):
         enable_logging = kwargs.pop("enable_logging", False)
