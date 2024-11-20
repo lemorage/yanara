@@ -10,8 +10,9 @@ from yanara.util.reqwest import request
 class WeChatAccount:
     current_environment = os.getenv("ENVIRONMENT", "dev")
 
-    def __init__(self, key: str):
+    def __init__(self, key: str, agent_id: str) -> None:
         self.key = key
+        self.agent_id = agent_id
 
     async def fetch_messages(self) -> List[Dict[str, Any]]:
         """Fetches messages for this WeChat account."""

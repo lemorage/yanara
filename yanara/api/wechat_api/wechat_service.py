@@ -9,8 +9,8 @@ from yanara.api.wechat_api.wechat_message_processor import WeChatMessageProcesso
 
 
 class WeChatService:
-    def __init__(self):
-        self.accounts = [WeChatAccount(key=account["key"]) for account in WeChatAccount.get_wechat_accounts()]
+    def __init__(self, agent_id: str) -> None:
+        self.accounts = [WeChatAccount(account["key"], agent_id) for account in WeChatAccount.get_wechat_accounts()]
 
     async def schedule_pulling_messages(self) -> None:
         """Schedule and process messages for all WeChat accounts."""
@@ -22,11 +22,13 @@ class WeChatService:
         messages = await account.fetch_messages()
         current_time = str(datetime.now())[:-7]
         if not messages:
-            print(f"[{current_time}]: Currently no messages.")
+            print(f"[{current_time}]: Currently no messages found.")
             return
 
-        print(f"[{current_time}]: ", messages)
-        processor = WeChatMessageProcessor(messages)
+        # msg_type == 49 denotes the message is from subscription accounts
+        filtered_messages = [item for item in messages if item["msg_type"] != 49]
+        print(f"[{current_time}]: ", filtered_messages)
+        processor = WeChatMessageProcessor(filtered_messages)
 
         if processor.has_incoming_message():
             await processor.process_messages(account.key)
