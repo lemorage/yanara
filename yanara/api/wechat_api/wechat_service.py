@@ -20,15 +20,15 @@ class WeChatService:
     async def process_account(self, account: WeChatAccount) -> None:
         """Process messages for a single WeChat account."""
         messages = await account.fetch_messages()
-        current_time = str(datetime.now())[:-7]
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if not messages:
-            print(f"[{current_time}]: Currently no messages found.")
+            print(f"[{current_time}]: No messages found.")
             return
 
-        # msg_type == 49 denotes the message is from subscription accounts
-        filtered_messages = [item for item in messages if item["msg_type"] != 49]
-        print(f"[{current_time}]: ", filtered_messages)
-        processor = WeChatMessageProcessor(filtered_messages)
+        # 49: subscription accounts | 51: floating windows
+        if filtered_messages := [msg for msg in messages if msg["msg_type"] not in {49, 51}]:
+            print(f"[{current_time}]: {filtered_messages}")
+            processor = WeChatMessageProcessor(filtered_messages)
 
-        if processor.has_incoming_message():
+        if processor and processor.has_incoming_message():
             await processor.process_messages(account.key)
