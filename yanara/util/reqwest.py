@@ -2,6 +2,12 @@ from functools import partial
 from typing import Any, Dict, Optional
 
 import httpx
+from rich import print
+from rich.console import Console
+from rich.traceback import install
+
+# Install rich traceback for nicer error display in the console
+install(show_locals=True)
 
 
 async def request(
@@ -63,18 +69,16 @@ async def _http_call(url: str, axios_options: Dict[str, Any], data: Optional[Dic
             return response.json()
 
     except httpx.HTTPStatusError as e:
-        if e.response.status_code in {400, 401, 403}:
-            print(f"[Error]: Client error {e.response.status_code} for {url}: {e.response.text}")
-        elif e.response.status_code in {500, 502, 503, 504}:
-            print(f"[Error]: Server error {e.response.status_code} for {url}. Please try again later.")
-        else:
-            print(f"[Error]: HTTP error {e.response.status_code} for {url}: {e.response.text}")
-        return {}
+        print(
+            f"[bold red]HTTP error {e.response.status_code}[/bold red] occurred while accessing [link={url}]{url}[/link]."
+        )
+        print(f"[bold yellow]Message:[/bold yellow] {e.response.text}")
+        raise
     except httpx.RequestError as e:
-        # Handle network-related issues
-        print(f"[Error]: Request error for {url}: {e}")
-        return {}
+        print(f"[bold red]Request error[/bold red] occurred while trying to reach [link={url}]{url}[/link].")
+        print(f"[bold yellow]Error details:[/bold yellow] {e}")
+        raise
     except Exception as e:
-        # Handle unexpected errors
-        print(f"[Error]: Unexpected error for {url}: {e}")
-        return {}
+        print(f"[bold red]Unexpected error[/bold red] occurred.")
+        print(f"[bold yellow]Error details:[/bold yellow] {e}")
+        raise
