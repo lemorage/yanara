@@ -63,6 +63,13 @@ repos:
 
   - repo: local
     hooks:
+      - id: pytest
+        name: run pytest with coverage
+        entry: pytest --maxfail=1 --disable-warnings --cov=. --cov-report=term-missing
+        language: python
+        pass_filenames: false
+        types: [python]
+
       - id: poetry-check
         name: poetry-check
         description: run poetry check to validate config
