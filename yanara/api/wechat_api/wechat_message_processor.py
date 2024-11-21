@@ -1,6 +1,9 @@
+from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
 from rich import print
+
+from yanara.api.wechat_api.wechat_account import WeChatAccount
 
 
 class WeChatMessageProcessor:
@@ -19,12 +22,24 @@ class WeChatMessageProcessor:
         return list({item["from_user_name"]["str"] for item in self.messages})
 
     async def process_messages(self, account_key: str) -> None:
-        """Process each message based on the username."""
-        usernames = self.extract_usernames()
-        for from_username in usernames:
-            message = self._get_message_by_username(from_username)
-            if message:
+        """
+        Process all messages for each username.
+        """
+        grouped_messages = self.group_messages_by_username()
+        for username, user_messages in grouped_messages.items():
+            for message in user_messages:
                 await self.process_message(message, account_key)
+
+    def group_messages_by_username(self) -> Dict[str, List[Dict[str, Any]]]:
+        """
+        Group all messages by their 'from_user_name'.
+        Returns a dictionary where keys are usernames, and values are lists of messages.
+        """
+        grouped_messages = defaultdict(list)
+        for message in self.messages:
+            username = message["from_user_name"]["str"]
+            grouped_messages[username].append(message)
+        return grouped_messages
 
     async def process_message(self, message: Dict[str, Any], account_key: str) -> None:
         """Process a single message and route it."""
@@ -37,10 +52,6 @@ class WeChatMessageProcessor:
     async def route_message(self, from_wxid: str, to_wxid: str, content: str, push_content: Optional[str]) -> None:
         """Handles message routing by printing the message details."""
         print(f"Routing message from {from_wxid} to {to_wxid} with content: {content}, push content: {push_content}")
-
-    def _get_message_by_username(self, username: str) -> Optional[Dict[str, Any]]:
-        """Helper method to get a message by the 'from_user_name'."""
-        return next((item for item in self.messages if item["from_user_name"]["str"] == username), None)
 
     @staticmethod
     def is_from_chatroom(from_wxid: str) -> bool:
@@ -55,6 +66,8 @@ class WeChatMessageProcessor:
     @staticmethod
     def get_nickname(push_content: str, content: str) -> str:
         """Extracts the nickname from the push content."""
+        # TODO: can get nickname also when not mentioning -> push_content.split(":", 1)[0].strip()
+        # TODO: multi-language replacement
         if content not in push_content:
             return push_content.replace("在群聊中@了你", "").strip()
         return push_content.replace(content, "").strip().rstrip().strip()
