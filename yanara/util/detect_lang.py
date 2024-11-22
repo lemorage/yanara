@@ -2,6 +2,9 @@ from typing import List, Tuple, Union
 
 from lingua import Language, LanguageDetectorBuilder
 
+# Current languages supported by the agents
+LANGUAGES: List[Language] = [Language.ENGLISH, Language.CHINESE, Language.JAPANESE]
+
 
 def build_detector(languages: List[Language]):
     """
