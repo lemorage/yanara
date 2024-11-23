@@ -49,6 +49,7 @@ def format_date_range(start_date: str, end_date: str, date_format: str = "%Y-%m-
 
     Returns:
         tuple: A tuple containing the formatted start and end date strings.
+
     """
 
     def adjust_and_format(date_str: str, adjust_days: int = 0) -> str:

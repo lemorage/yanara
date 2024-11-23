@@ -31,16 +31,18 @@ def lookup_room_availability_by_date(self: "Agent", check_in: str, check_out: st
     }
 
     """
-    from yanara.api.lark_api import fetch_records_within_date_range
+    from yanara.api.lark_api.lark_service import LarkTableService
     from yanara.util.date import format_date_range
 
     formatted_check_in, formatted_check_out = format_date_range(check_in, check_out)
 
-    return fetch_records_within_date_range(
-        "KFo5bqi26a52u2s5toJcrV6tnWb",
-        "tblxlwPlmWXLOHl7",
-        "vew9aCSfMp",
-        [
+    lark_service = LarkTableService("KFo5bqi26a52u2s5toJcrV6tnWb")
+
+    # Fetch the records using the service
+    return lark_service.fetch_records_within_date_range(
+        table_id="tblxlwPlmWXLOHl7",
+        view_id="vew9aCSfMp",
+        field_names=[
             "日期",
             "空室数",
             "家庭房101库存",
@@ -50,7 +52,7 @@ def lookup_room_availability_by_date(self: "Agent", check_in: str, check_out: st
             "淋浴双床房201库存",
             "淋浴大床房202库存",
         ],
-        "日期",
-        formatted_check_in,
-        formatted_check_out,
+        filter_field_name="日期",
+        start_date=formatted_check_in,
+        end_date=formatted_check_out,
     )
