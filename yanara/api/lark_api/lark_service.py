@@ -61,6 +61,38 @@ class LarkTableService:
 
         return self._process_response_data(response.data, filter_field_name)
 
+    def fetch_records_with_exact_value(
+        self,
+        table_id: str,
+        view_id: str,
+        field_names: List[str],
+        filter_field_name: str,
+        filter_value: str,
+    ) -> Dict:
+        """
+        Fetches records filtered by an exact value for a specific field in a Lark table.
+
+        Args:
+            table_id (str): The ID of the table to fetch data from.
+            view_id (str): The view ID for the table.
+            field_names (List[str]): The names of fields to include in the results.
+            filter_field_name (str): The field name to filter records by.
+            filter_value (str): The value to filter records by (exact match).
+
+        Returns:
+            Dict: A dictionary containing the filtered records.
+        """
+        filter_conditions = self._build_exact_value_filter_conditions(filter_field_name, filter_value)
+        request_body = self._build_request_body(view_id, field_names, filter_conditions)
+        response = self._send_request(table_id, request_body)
+
+        if not response.success():
+            lark.logger.error(f"Failed to fetch records: {response.code}, {response.msg}")
+            return {}
+
+        data_dict = json.loads(lark.JSON.marshal(response.data, indent=4))
+        return data_dict
+
     @staticmethod
     def _build_date_filter_conditions(
         field_name: str, start_date: datetime.datetime, end_date: datetime.datetime
@@ -88,6 +120,20 @@ class LarkTableService:
             .value(["ExactDate", datetime_to_timestamp(end_date)])
             .build(),
         ]
+
+    @staticmethod
+    def _build_exact_value_filter_conditions(field_name: str, val: str) -> List[Condition]:
+        """
+        Creates filter conditions for a specific field where the value must match exactly.
+
+        Args:
+            field_name (str): The field to filter on.
+            val (str): The exact value to filter by.
+
+        Returns:
+            List[Condition]: A list of filter conditions that match the exact value.
+        """
+        return [Condition.builder().field_name(field_name).operator("is").value([val]).build()]
 
     @staticmethod
     def _build_request_body(
