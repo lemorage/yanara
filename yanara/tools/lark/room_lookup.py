@@ -55,3 +55,31 @@ def lookup_room_availability_by_date(self: "Agent", check_in: str, check_out: st
         start_date=formatted_check_in,
         end_date=formatted_check_out,
     )
+
+
+def process_room_availability_data(data: dict) -> dict:
+    """Process room availability data by extracting and cleaning up the 'fields' data
+    into a flat dictionary with field names as keys and the corresponding values from 'value'.
+
+    Args:
+        data (dict): The data containing items with fields to process.
+
+    Returns:
+        dict: A transformed dictionary with each field name as a key and the value from 'value'.
+    """
+    processed_data = {}
+
+    for item in data.get("items", []):
+        fields = item.get("fields", {})
+
+        for field_name, field_data in fields.items():
+            # If the field data is a dictionary (containing 'type' and 'value')
+            if isinstance(field_data, dict):
+                value = field_data.get("value", [None])[0]
+            else:
+                # If the field is just a value (e.g., a string like '日期')
+                value = field_data
+
+            processed_data[field_name] = value
+
+    return processed_data
