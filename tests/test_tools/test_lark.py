@@ -62,16 +62,18 @@ def mocked_lark_service():
 def test_process_room_availability_data(sample_raw_data):
     """Test the `process_lark_data` function."""
     # Arrange
-    expected_output = {
-        "两室家庭房401库存": 0,
-        "家庭房101库存": 0,
-        "日期": "2024-11-15 00:00:00",
-        "浴缸双床房301库存": 0,
-        "淋浴双床房201库存": 0,
-        "淋浴大床房202库存": 1,
-        "空室数": 1,
-        "隔断家庭房302库存": 0,
-    }
+    expected_output = [
+        {
+            "两室家庭房401库存": 0,
+            "家庭房101库存": 0,
+            "日期": "2024-11-15 00:00:00",
+            "浴缸双床房301库存": 0,
+            "淋浴双床房201库存": 0,
+            "淋浴大床房202库存": 1,
+            "空室数": 1,
+            "隔断家庭房302库存": 0,
+        }
+    ]
 
     # Act
     processed_data = process_lark_data(sample_raw_data)
