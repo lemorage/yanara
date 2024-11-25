@@ -1,5 +1,9 @@
 import datetime
 from unittest.mock import MagicMock, patch
+import warnings
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 from lark_oapi.api.bitable.v1 import BaseResponse, Condition, SearchAppTableRecordRequestBody
 import pytest
