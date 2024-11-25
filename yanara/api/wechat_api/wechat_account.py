@@ -29,6 +29,31 @@ class WeChatAccount:
         result = await request(url, {"ChatRoomWxIdList": [chatroom_id]}, {"method": "post"})
         return result.get("Data", {}) if result else {}
 
+    async def send_wechat_message(self, message: dict, content: str) -> None:
+        """Sends a WeChat message to the specified user."""
+        account = message.get("account")
+        from_wxid = message.get("fromWxid")
+        mention = message.get("mention")
+
+        url = f"{self.get_service_base_path()}/v1/message/SendTextMessage?key={self.key}"
+
+        mention_list = [] if not mention else [mention.get("wxid")]
+        text_content = content if not mention else f"@{mention.get('nickname')} {content}"
+
+        data = {
+            "MsgItem": [
+                {
+                    "ToUserName": from_wxid,
+                    "TextContent": text_content,
+                    "AtWxIDList": mention_list,
+                    "MsgType": 1,
+                    "Delay": True,
+                }
+            ]
+        }
+
+        await request(url, {"data": data}, {"method": "post"})
+
     async def get_account_by_wxid(self, wxid: str) -> Optional[Dict[str, Any]]:
         """Find and return the account by wxid or None if not found."""
         accounts = WeChatAccount.get_wechat_accounts()
