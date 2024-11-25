@@ -1,51 +1,43 @@
-def get_weekly_report_statistics(self: "Agent", which_week: str) -> dict:
+def get_weekly_report_statistics(self: "Agent", which_week: str) -> list[dict]:
     """Get the weekly report statistics for a specific week.
 
     Args:
-        which_week (int): The week number to get the statistics for.
+        which_week (str): The week number to get the statistics for.
 
     Returns:
-        dict: A dictionary containing the weekly report statistics.
+        list[dict]: A list of dictionaries, each containing the processed weekly report statistics.
 
     Example:
-        >>> get_weekly_report_statistics(38)
-        {
-        'items': [
+        >>> get_weekly_report_statistics("38")
+        [
             {
-                'fields': {
-                    '101已售房晚': {'type': 2, 'value': [6]},
-                    '201已售房晚': {'type': 2, 'value': [6]},
-                    '202已售房晚': {'type': 2, 'value': [7]},
-                    '301已售房晚': {'type': 2, 'value': [7]},
-                    '302已售房晚': {'type': 2, 'value': [6]},
-                    '401已售房晚': {'type': 2, 'value': [7]},
-                    'repar': {'type': 2, 'value': [12870.238095238095]},
-                    '周一日期': 1726412400000,
-                    '周日日期': {'type': 5, 'value': [1726930800000]},
-                    '売上': {'type': 2, 'value': [540550]},
-                    '平均房价': {'type': 2, 'value': [13860.25641025641]},
-                    '总儿童数': {'type': 2, 'value': [0]},
-                    '总泊数': {'type': 2, 'value': [39]},
-                    '有効注文数': {'type': 2, 'value': [16]},
-                    '稼働率': {'type': 2, 'value': [0.9285714285714286]},
-                    '第几周': {'type': 2, 'value': [38]},
-                    '総人数': {'type': 2, 'value': [40]},
-                    '総人泊数': {'type': 2, 'value': [100]}
-                },
-                'record_id': 'recukzcjtCfXkw'
-            }
-        ],
-        'has_more': False,
-        'total': 1
-    }
-
-
+                "101已售房晚": 6,
+                "201已售房晚": 6,
+                "202已售房晚": 7,
+                "301已售房晚": 7,
+                "302已售房晚": 6,
+                "401已售房晚": 7,
+                "repar": 12870.238095238095,
+                "周一日期": 1726412400000,
+                "周日日期": 1726930800000,
+                "売上": 540550,
+                "平均房价": 13860.25641025641,
+                "总儿童数": 0,
+                "总泊数": 39,
+                "有効注文数": 16,
+                "稼働率": 0.9285714285714286,
+                "第几周": 38,
+                "総人数": 40,
+                "総人泊数": 100,
+            },
+        ]
     """
     from yanara.api.lark_api.lark_service import LarkTableService
+    from yanara.tools._internal.helpers import process_lark_data
 
     lark_service = LarkTableService("KFo5bqi26a52u2s5toJcrV6tnWb")
 
-    return lark_service.fetch_records_with_exact_value(
+    raw_data = lark_service.fetch_records_with_exact_value(
         table_id="tblulMPBjoYKFpDg",
         view_id="vew8UWgWyj",
         field_names=[
@@ -71,6 +63,8 @@ def get_weekly_report_statistics(self: "Agent", which_week: str) -> dict:
         filter_field_name="第几周",
         filter_value=str(which_week),
     )
+
+    return process_lark_data(raw_data)
 
 
 def weekly_report_typesetting_print(self: "Agent") -> str:
