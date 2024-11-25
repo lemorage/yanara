@@ -5,10 +5,10 @@ import signal
 from rich import print
 
 from yanara.api.wechat_api.wechat_account import WeChatAccount
-from yanara.api.wechat_api.wechat_message_processor import WeChatMessageProcessor
+from yanara.api.wechat_api.wechat_message_worker import WeChatMessageWorker
 
 
-class WeChatService:
+class WeChatMessageManager:
     def __init__(self, agent_id: str) -> None:
         self.accounts = [WeChatAccount(account["key"], agent_id) for account in WeChatAccount.get_wechat_accounts()]
 
@@ -30,7 +30,7 @@ class WeChatService:
         if filtered_messages:
             print(f"[{current_time}]: {filtered_messages}")
 
-            processor = WeChatMessageProcessor(filtered_messages, account)
+            worker = WeChatMessageWorker(filtered_messages, account)
 
-            if processor.has_incoming_message():
-                await processor.process_messages(account.key)
+            if worker.has_incoming_message():
+                await worker.process_messages(account.key)

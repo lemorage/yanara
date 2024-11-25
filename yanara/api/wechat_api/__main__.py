@@ -4,7 +4,7 @@ import signal
 
 from rich import print
 
-from yanara.api.wechat_api.wechat_service import WeChatService
+from yanara.api.wechat_api.wechat_message_manager import WeChatMessageManager
 from yanara.util.decorators import entry
 
 
@@ -12,7 +12,7 @@ from yanara.util.decorators import entry
 async def monitor_wechat_messages(stop_flag: asyncio.Event) -> None:
     """Monitor and process WeChat messages until stop flag is set."""
     print("Monitoring WeChat messages...")
-    service = WeChatService("")
+    service = WeChatMessageManager(None)
     while not stop_flag.is_set():
         await service.schedule_pulling_messages()
         await asyncio.sleep(5)

@@ -8,7 +8,7 @@ from yanara.api.wechat_api.wechat_account import WeChatAccount
 from yanara.util.detect_lang import LANGUAGES, detect_from_text
 
 
-class WeChatMessageProcessor:
+class WeChatMessageWorker:
     def __init__(self, messages: List[Dict[str, Any]], wechat_account: WeChatAccount) -> None:
         """Initialize with the list of messages and a WeChatAccount instance."""
         self.messages = messages
@@ -63,7 +63,7 @@ class WeChatMessageProcessor:
 
         agent_id = account["identifier"]
         lang = detect_from_text(content, LANGUAGES, confidence_threshold=0.7)
-        nickname = WeChatMessageProcessor.get_nickname(push_content, content)
+        nickname = WeChatMessageWorker.get_nickname(push_content, content)
 
         await self.chat(agent_id, lang, nickname, content)
 
