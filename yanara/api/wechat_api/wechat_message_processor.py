@@ -1,15 +1,18 @@
 from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
+from letta.client.client import LocalClient
 from rich import print
 
 from yanara.api.wechat_api.wechat_account import WeChatAccount
+from yanara.util.detect_lang import LANGUAGES, detect_from_text
 
 
 class WeChatMessageProcessor:
-    def __init__(self, messages: List[Dict[str, Any]]) -> None:
-        """Initialize with the list of messages."""
+    def __init__(self, messages: List[Dict[str, Any]], wechat_account: WeChatAccount) -> None:
+        """Initialize with the list of messages and a WeChatAccount instance."""
         self.messages = messages
+        self.wechat_account = wechat_account
 
     def has_incoming_message(self) -> bool:
         """Returns True if there is exactly one incoming message type (msg_type == 1)."""
@@ -52,6 +55,29 @@ class WeChatMessageProcessor:
     async def route_message(self, from_wxid: str, to_wxid: str, content: str, push_content: Optional[str]) -> None:
         """Handles message routing by printing the message details."""
         print(f"Routing message from {from_wxid} to {to_wxid} with content: {content}, push content: {push_content}")
+
+        account = await self.wechat_account.get_account_by_wxid(to_wxid)
+        if not account:
+            print(f"Account not found for wxid: {to_wxid}")
+            return
+
+        agent_id = account["identifier"]
+        lang = detect_from_text(content, LANGUAGES, confidence_threshold=0.7)
+        nickname = WeChatMessageProcessor.get_nickname(push_content, content)
+
+        await self.chat(agent_id, lang, nickname, content)
+
+    async def chat(self, client: LocalClient, agent_id: str, lang: str, nickname: str, content: str) -> None:
+        """Chat with the given agent in the specified language."""
+        print(f"Chatting with agent {agent_id} in language {lang} with nickname {nickname}")
+        if not is_from_chatroom(agent_id):
+            response = client.send_message(agent_id=agent_id, message=content, lang=lang)
+            await self.wechat_account.send_wechat_message(response, content)
+        # TODO:
+        #     return
+        # else:
+        #     if is_mention(content, [nickname]):
+        #         print(f"Mentioning {nickname} in the content: {content}")
 
     @staticmethod
     def is_from_chatroom(from_wxid: str) -> bool:

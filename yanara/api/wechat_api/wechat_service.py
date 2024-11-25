@@ -24,10 +24,13 @@ class WeChatService:
         if not messages:
             return
 
-        # 49: subscription accounts | 51: floating windows
-        if filtered_messages := [msg for msg in messages if msg["msg_type"] < 48]:
-            print(f"[{current_time}]: {filtered_messages}")
-            processor = WeChatMessageProcessor(filtered_messages)
+        # Filter messages by type
+        filtered_messages = [msg for msg in messages if msg["msg_type"] < 48]
 
-        if processor and processor.has_incoming_message():
-            await processor.process_messages(account.key)
+        if filtered_messages:
+            print(f"[{current_time}]: {filtered_messages}")
+
+            processor = WeChatMessageProcessor(filtered_messages, account)
+
+            if processor.has_incoming_message():
+                await processor.process_messages(account.key)

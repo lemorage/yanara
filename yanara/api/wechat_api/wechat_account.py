@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from rich import print
 
@@ -29,10 +29,10 @@ class WeChatAccount:
         result = await request(url, {"ChatRoomWxIdList": [chatroom_id]}, {"method": "post"})
         return result.get("Data", {}) if result else {}
 
-    @classmethod
-    def is_production(cls) -> bool:
-        """Check if the current environment is production."""
-        return cls.current_environment.lower() == "prod"
+    async def get_account_by_wxid(self, wxid: str) -> Optional[Dict[str, Any]]:
+        """Find and return the account by wxid or None if not found."""
+        accounts = WeChatAccount.get_wechat_accounts()
+        return next((account for account in accounts if account["wxid"] == wxid), None)
 
     def get_service_base_path(self) -> str:
         """Returns the base path for the WeChat agent service depending on the environment."""
@@ -40,6 +40,11 @@ class WeChatAccount:
             return "http://wechat-agent-service:8011"
         else:
             return "http://127.0.0.1:8011"
+
+    @classmethod
+    def is_production(cls) -> bool:
+        """Check if the current environment is production."""
+        return cls.current_environment.lower() == "prod"
 
     @staticmethod
     def get_wechat_accounts() -> List[Dict[str, Any]]:

@@ -71,7 +71,7 @@ from yanara.api.wechat_api.wechat_message_processor import WeChatMessageProcesso
 async def test_process_messages(messages: List[Dict[str, Any]], expected_usernames: List[str], mocker) -> None:
     """Test the process_messages method with different scenarios."""
     # Arrange
-    processor = WeChatMessageProcessor(messages)
+    processor = WeChatMessageProcessor(messages, wechat_account=mocker.Mock())
     account_key = "test_account_key"
 
     mock_route_message = mocker.patch.object(processor, "route_message", return_value=asyncio.Future())
@@ -126,7 +126,7 @@ async def test_process_messages_all_messages_from_one_user(mocker) -> None:
             "new_msg_id": 6270614409704083722,
         },
     ]
-    processor = WeChatMessageProcessor(messages)
+    processor = WeChatMessageProcessor(messages, wechat_account=mocker.Mock())
     account_key = "test_account_key"
 
     # Mock the route_message method to track calls
