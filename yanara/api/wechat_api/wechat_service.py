@@ -22,11 +22,10 @@ class WeChatService:
         messages = await account.fetch_messages()
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if not messages:
-            print(f"[{current_time}]: No messages found.")
             return
 
         # 49: subscription accounts | 51: floating windows
-        if filtered_messages := [msg for msg in messages if msg["msg_type"] not in {49, 51}]:
+        if filtered_messages := [msg for msg in messages if msg["msg_type"] < 48]:
             print(f"[{current_time}]: {filtered_messages}")
             processor = WeChatMessageProcessor(filtered_messages)
 
