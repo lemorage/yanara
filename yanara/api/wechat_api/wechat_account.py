@@ -29,11 +29,10 @@ class WeChatAccount:
         result = await request(url, {"ChatRoomWxIdList": [chatroom_id]}, {"method": "post"})
         return result.get("Data", {}) if result else {}
 
-    async def send_wechat_message(self, message: dict, content: str) -> None:
+    async def send_wechat_message(self, user_id: str, message: dict, content: str) -> None:
         """Sends a WeChat message to the specified user."""
-        account = message.get("account")
-        from_wxid = message.get("fromWxid")
-        mention = message.get("mention")
+        # TODO: pass mention as a parameter
+        mention = None
 
         url = f"{self.get_service_base_path()}/v1/message/SendTextMessage?key={self.key}"
 
@@ -43,7 +42,7 @@ class WeChatAccount:
         data = {
             "MsgItem": [
                 {
-                    "ToUserName": from_wxid,
+                    "ToUserName": user_id,
                     "TextContent": text_content,
                     "AtWxIDList": mention_list,
                     "MsgType": 1,

@@ -65,14 +65,14 @@ class WeChatMessageWorker:
         lang = detect_from_text(content, LANGUAGES, confidence_threshold=0.7)
         nickname = WeChatMessageWorker.get_nickname(push_content, content)
 
-        await self.chat(agent_id, lang, nickname, content)
+        await self.chat(from_wxid, agent_id, lang, nickname, content)
 
-    async def chat(self, client: LocalClient, agent_id: str, lang: str, nickname: str, content: str) -> None:
+    async def chat(self, user_id: str, agent_id: str, lang: str, nickname: str, content: str) -> None:
         """Chat with the given agent in the specified language."""
         print(f"Chatting with agent {agent_id} in language {lang} with nickname {nickname}")
-        if not is_from_chatroom(agent_id):
-            response = client.send_message(agent_id=agent_id, message=content, lang=lang)
-            await self.wechat_account.send_wechat_message(response, content)
+        if not WeChatMessageWorker.is_from_chatroom(agent_id):
+            response = client.send_message(agent_id=agent_id, role="user", message=content)
+            await self.wechat_account.send_wechat_message(user_id, self.messages, str(response))
         # TODO:
         #     return
         # else:
