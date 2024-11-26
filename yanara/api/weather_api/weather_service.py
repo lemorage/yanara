@@ -52,7 +52,7 @@ class WeatherService:
         Combines geocoding, weather API calls, and adds timezone info.
         """
         coordinates = await self.get_lat_lon(location)
-        if not coordinates:
+        if coordinates == (None, None):
             return {"error": "Failed to resolve coordinates for the location."}
 
         lat, lon = coordinates
