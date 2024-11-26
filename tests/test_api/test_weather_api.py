@@ -115,7 +115,8 @@ def test_fetch_weather_http_error(mock_httpx_client):
 @pytest.mark.asyncio
 @patch("yanara.api.weather_api.weather_service.Nominatim")
 @patch("yanara.api.weather_api.weather_service.httpx.Client")
-async def test_get_weather(mock_httpx_client, mock_nominatim):
+@patch("yanara.api.weather_api.weather_service.TimezoneFinder")
+async def test_get_weather(mock_tzfinder, mock_httpx_client, mock_nominatim):
     # Arrange
     mock_geolocator = mock_nominatim.return_value
     mock_geolocator.geocode = AsyncMock(return_value=MagicMock(latitude=48.8566, longitude=2.3522))
@@ -125,6 +126,8 @@ async def test_get_weather(mock_httpx_client, mock_nominatim):
         "current_weather": {"temperature": 15.0, "windspeed": 8.5, "winddirection": 332}
     }
 
+    mock_tzfinder.return_value.timezone_at = MagicMock(return_value="Europe/Paris")
+
     weather_service = WeatherService()
     location = "Paris"
 
@@ -132,9 +135,11 @@ async def test_get_weather(mock_httpx_client, mock_nominatim):
     weather_data = await weather_service.get_weather(location)
 
     # Assert
-    assert weather_data == {"temperature": 15.0, "windspeed": 8.5, "winddirection": 332}
+    assert "timezone" in weather_data
+    assert weather_data["timezone"] == "Europe/Paris"
     mock_geolocator.geocode.assert_called_once_with(location, timeout=10)
     mock_client_instance.get.assert_called_once()
+    mock_tzfinder.return_value.timezone_at.assert_called_once_with(lat=48.8566, lng=2.3522)
 
 
 @pytest.mark.parametrize(
