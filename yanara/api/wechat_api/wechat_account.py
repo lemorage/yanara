@@ -29,7 +29,7 @@ class WeChatAccount:
         result = await request(url, {"ChatRoomWxIdList": [chatroom_id]}, {"method": "post"})
         return result.get("Data", {}) if result else {}
 
-    async def send_wechat_message(self, user_id: str, message: dict, content: str) -> None:
+    async def send_wechat_message(self, user_id: str, content: str) -> None:
         """Sends a WeChat message to the specified user."""
         # TODO: pass mention as a parameter
         mention = None
@@ -46,6 +46,23 @@ class WeChatAccount:
                     "TextContent": text_content,
                     "AtWxIDList": mention_list,
                     "MsgType": 1,
+                    "Delay": True,
+                }
+            ]
+        }
+
+        await request(url, {"data": data}, {"method": "post"})
+
+    async def send_wechat_image_message(self, user_id: str, image: str) -> None:
+        """Sends a WeChat image message to the specified user."""
+        url = f"{self.get_service_base_path()}/v1/message/SendImageNewMessage?key={self.key}"
+
+        data = {
+            "MsgItem": [
+                {
+                    "ToUserName": user_id,
+                    "TextContent": "",
+                    "ImageContent": image,
                     "Delay": True,
                 }
             ]
