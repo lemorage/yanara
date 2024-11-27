@@ -1,10 +1,10 @@
 from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
-from letta.client.client import LocalClient
 from rich import print
 
 from yanara.api.wechat_api.wechat_account import WeChatAccount
+from yanara.globals import client
 from yanara.util.detect_lang import LANGUAGES, detect_from_text
 
 
@@ -71,8 +71,9 @@ class WeChatMessageWorker:
         """Chat with the given agent in the specified language."""
         print(f"Chatting with agent {agent_id} in language {lang} with nickname {nickname}")
         if not WeChatMessageWorker.is_from_chatroom(agent_id):
-            response = client.send_message(agent_id=agent_id, role="user", message=content)
-            await self.wechat_account.send_wechat_message(user_id, self.messages, str(response))
+            response = client.send_message(agent_id=self.wechat_account.agent_id, role="user", message=content)
+            print("debug response:", response)
+            x = await self.wechat_account.send_wechat_message(user_id, response.messages)
         # TODO:
         #     return
         # else:
