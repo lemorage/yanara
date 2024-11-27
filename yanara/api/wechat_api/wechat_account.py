@@ -29,7 +29,7 @@ class WeChatAccount:
         result = await request(url=url, data={"ChatRoomWxIdList": [chatroom_id]}, options={"method": "post"})
         return result.get("Data", {}) if result else {}
 
-    async def send_wechat_message(self, user_id: str, content: str) -> None:
+    async def send_wechat_message(self, user_id: str, content: str) -> Any:
         """Sends a WeChat message to the specified user."""
         # TODO: pass mention as a parameter
         mention = None
@@ -51,9 +51,9 @@ class WeChatAccount:
             ]
         }
 
-        await request(url=url, data=data, options={"method": "post"})
+        return await request(url=url, data=data, options={"method": "post"})
 
-    async def send_wechat_image_message(self, user_id: str, image: str) -> None:
+    async def send_wechat_image_message(self, user_id: str, image: str) -> Any:
         """Sends a WeChat image message to the specified user."""
         url = f"{self.get_service_base_path()}/v1/message/SendImageNewMessage?key={self.key}"
 
@@ -68,7 +68,7 @@ class WeChatAccount:
             ]
         }
 
-        await request(url=url, data=data, options={"method": "post"})
+        return await request(url=url, data=data, options={"method": "post"})
 
     async def get_account_by_wxid(self, wxid: str) -> Optional[Dict[str, Any]]:
         """Find and return the account by wxid or None if not found."""
