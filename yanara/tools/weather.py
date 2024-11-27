@@ -1,7 +1,7 @@
 from typing import Dict, Union
 
 
-async def get_weather_forecast_by_location(self: "Agent", location: str) -> dict:  # TODO Dict[str, Union[str, float]]:
+def get_weather_forecast_by_location(self: "Agent", location: str) -> dict:  # TODO Dict[str, Union[str, float]]:
     """
     Get the current weather for a given location.
 
@@ -31,7 +31,7 @@ async def get_weather_forecast_by_location(self: "Agent", location: str) -> dict
     from yanara.api.weather_api.weather_service import WEATHER_CODE_MAPPING, WeatherService
 
     weather_service = WeatherService()
-    weather_data = await weather_service.get_weather(location)
+    weather_data = weather_service.get_weather(location)
 
     # Map weather code to description
     weather_description = WEATHER_CODE_MAPPING.get(weather_data["weathercode"], "Unknown Weather")

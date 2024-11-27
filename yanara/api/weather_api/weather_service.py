@@ -1,7 +1,5 @@
-import asyncio
 from typing import Dict, Optional, Tuple, Union
 
-from geopy.adapters import AioHTTPAdapter
 from geopy.exc import GeocoderTimedOut
 from geopy.geocoders import Nominatim
 import httpx
@@ -43,15 +41,15 @@ WEATHER_CODE_MAPPING = {
 
 class WeatherService:
     def __init__(self, user_agent: str = "weather_app"):
-        self.geolocator = Nominatim(user_agent=user_agent, adapter_factory=AioHTTPAdapter, scheme="http")
+        self.geolocator = Nominatim(user_agent=user_agent)
         self.client = httpx.Client()
 
-    async def get_weather(self, location: str) -> Dict[str, Union[str, float]]:
+    def get_weather(self, location: str) -> Dict[str, Union[str, float]]:
         """
         Get the current weather for a given location.
         Combines geocoding, weather API calls, and adds timezone info.
         """
-        coordinates = await self.get_lat_lon(location)
+        coordinates = self.get_lat_lon(location)
         if coordinates == (None, None):
             return {"error": "Failed to resolve coordinates for the location."}
 
@@ -62,16 +60,16 @@ class WeatherService:
             return weather_data
 
         # Add timezone to weather data
-        weather_data["timezone"] = await self.get_timezone(lat, lon)
+        weather_data["timezone"] = self.get_timezone(lat, lon)
         return weather_data
 
-    async def get_lat_lon(self, location: str) -> Optional[Tuple[float, float]]:
+    def get_lat_lon(self, location: str) -> Optional[Tuple[float, float]]:
         """
         Get the latitude and longitude of a location.
         Returns None if the location is not found or an error occurs.
         """
         try:
-            result = await self.geolocator.geocode(location, timeout=10)
+            result = self.geolocator.geocode(location, timeout=10)
             if result:
                 return result.latitude, result.longitude
             print(f"Location '{location}' not found.")
@@ -81,7 +79,7 @@ class WeatherService:
             print(f"Error during geocoding: {e}")
         return None, None
 
-    async def get_timezone(self, latitude: float, longitude: float) -> str:
+    def get_timezone(self, latitude: float, longitude: float) -> str:
         """
         Get the timezone for a given latitude and longitude.
         Uses the TimezoneFinder library to determine the timezone name (e.g., 'Asia/Tokyo').
