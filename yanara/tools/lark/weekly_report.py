@@ -1,14 +1,14 @@
-def get_weekly_report_statistics(self: "Agent", which_week: str) -> list[dict]:
+def get_weekly_report_statistics(self: "Agent", which_week: int) -> list[dict]:
     """Get the weekly report statistics for a specific week.
 
     Args:
-        which_week (str): The week number to get the statistics for.
+        which_week (int): The week number to get the statistics for. Use `datetime.date.today().isocalendar()[1]` to get current week number.
 
     Returns:
         list[dict]: A list of dictionaries, each containing the processed weekly report statistics.
 
     Example:
-        >>> get_weekly_report_statistics("38")
+        >>> get_weekly_report_statistics(38)
         [
             {
                 "101已售房晚": 6,
