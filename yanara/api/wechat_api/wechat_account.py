@@ -17,7 +17,7 @@ class WeChatAccount:
     async def fetch_messages(self) -> List[Dict[str, Any]]:
         """Fetches messages for this WeChat account."""
         url = f"{self.get_service_base_path()}/v1/message/NewSyncHistoryMessage?key={self.key}"
-        result = await request(url, {"Scene": 3}, {"method": "post"})
+        result = await request(url=url, data={"Scene": 3}, options={"method": "post"})
         if result.get("Code") != 200:
             print(f"API call failed with response: '{result}'.")
             return []
@@ -26,7 +26,7 @@ class WeChatAccount:
     async def fetch_chatroom_info(self, chatroom_id: str) -> Dict[str, Any]:
         """Fetches chatroom information for the given chatroom ID."""
         url = f"{self.get_service_base_path()}/v1/chatroom/GetChatRoomInfo?key={self.key}"
-        result = await request(url, {"ChatRoomWxIdList": [chatroom_id]}, {"method": "post"})
+        result = await request(url=url, data={"ChatRoomWxIdList": [chatroom_id]}, options={"method": "post"})
         return result.get("Data", {}) if result else {}
 
     async def send_wechat_message(self, user_id: str, content: str) -> None:
@@ -51,7 +51,7 @@ class WeChatAccount:
             ]
         }
 
-        await request(url, {"data": data}, {"method": "post"})
+        await request(url=url, data=data, options={"method": "post"})
 
     async def send_wechat_image_message(self, user_id: str, image: str) -> None:
         """Sends a WeChat image message to the specified user."""
@@ -68,7 +68,7 @@ class WeChatAccount:
             ]
         }
 
-        await request(url, {"data": data}, {"method": "post"})
+        await request(url=url, data=data, options={"method": "post"})
 
     async def get_account_by_wxid(self, wxid: str) -> Optional[Dict[str, Any]]:
         """Find and return the account by wxid or None if not found."""
