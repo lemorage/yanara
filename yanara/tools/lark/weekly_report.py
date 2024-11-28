@@ -105,19 +105,20 @@ def get_weekly_report_statistics(self: "Agent", which_week: int) -> list[dict]:
     return standardize_report_data(processed_data)
 
 
-def weekly_report_typesetting_print(self: "Agent") -> str:
+def weekly_report_typesetting_print(self: "Agent", weekly_report_data: list[dict]) -> str:
     """Print the weekly report typesetting.
 
     Args:
-        None
+        weekly_report_data (list[dict]): A list of dictionaries containing the data for the weekly report.
+            Currently, it is guaranteed to have only one dictionary in this list to generate the report for one specific week.
 
     Returns:
-        str: A base64-encoded image of the weekly report typesetting.
+        str: The file path to a temporary image file containing the weekly report typesetting.
 
     Example:
-        >>> weekly_report_typesetting_print()
+        >>> weekly_report_data = get_weekly_report_statistics(38)
+        >>> weekly_report_typesetting_print(weekly_report_data)
         '/var/folders/9n/zrq49fmx27l7237gf4kj001h0000gn/T/tmpb3m53r1t.png'
-        ...
     """
 
     import base64
@@ -133,29 +134,8 @@ def weekly_report_typesetting_print(self: "Agent") -> str:
     font_data = base64.b64decode(encoded_font)
     font_file = io.BytesIO(font_data)
 
-    # Extract data
-    item = {
-        "第几周": 37,
-        "周一日期": 1726412400000,
-        "周日日期": 1726930800000,
-        "稼働率": 0.76,
-        "売上": 451190,
-        "repar": 10743,
-        "平均房价": 14100,
-        "总泊数": 32,
-        "有効注文数": 18,
-        "総人数": 50,
-        "総人泊数": 73,
-        "総儿童数": 0,
-        "101已售房晚": 6,
-        "201已售房晚": 5,
-        "202已售房晚": 5,
-        "301已售房晚": 3,
-        "302已售房晚": 6,
-        "401已售房晚": 7,
-    }
-    week_start = datetime.fromtimestamp(item["周一日期"] / 1000, timezone.utc).strftime("%Y/%m/%d")
-    week_end = datetime.fromtimestamp(item["周日日期"] / 1000, timezone.utc).strftime("%Y/%m/%d")
+    # Extract data (guaranteed to have only one item)
+    weekly_report_data = weekly_report_data[0]
 
     # Create image
     img_width, img_height = 1200, 800
@@ -178,7 +158,7 @@ def weekly_report_typesetting_print(self: "Agent") -> str:
     )
     draw.text(
         (table_x + col_width // 2, table_y + row_height // 2),
-        f"第几周: {item['第几周']}",
+        f"第几周: {weekly_report_data['第几周']}",
         font=font,
         fill="black",
         anchor="mm",
@@ -191,7 +171,7 @@ def weekly_report_typesetting_print(self: "Agent") -> str:
     )
     draw.text(
         (table_x + col_width * 2, table_y + row_height // 2),
-        f"日期: {week_start}~{week_end}",
+        f"日期: {weekly_report_data['周一日期']} ~ {weekly_report_data['周日日期']}",
         font=font,
         fill="black",
         anchor="mm",
@@ -203,16 +183,16 @@ def weekly_report_typesetting_print(self: "Agent") -> str:
     # Define table data
     table_data = [
         [
-            f"本周入住率: {item['稼働率'] * 100:.0f}%",
-            f"周营业额: {item['売上']}",
-            f"总晚数: {item['总泊数']}",
+            f"本周入住率: {weekly_report_data['入住率']}",
+            f"周营业额: {weekly_report_data['周营业额']}",
+            f"总晚数: {weekly_report_data['总晚数']}",
         ],
-        [f"平均房价: {item['平均房价']}", f"Repar: {item['repar']}", ""],
-        [f"订单平均金额: 24558", f"订单数: {item['有効注文数']}", ""],
+        [f"平均房价: {weekly_report_data['平均房价']}", f"Repar: {weekly_report_data['repar']}", ""],
+        [f"订单平均金额: 24558", f"订单数: {weekly_report_data['订单数']}", ""],
         [
-            f"总接待人数: {item['総人数']}",
-            f"总接待人晚: {item['総人泊数']}",
-            f"总儿童数: {item['総儿童数']}",
+            f"总接待人数: {weekly_report_data['总接待人数']}",
+            f"总接待人晚: {weekly_report_data['总接待人晚']}",
+            f"总儿童数: {weekly_report_data['总儿童数']}",
         ],
     ]
 
@@ -235,9 +215,9 @@ def weekly_report_typesetting_print(self: "Agent") -> str:
 
     # Room sales data (merged cell)
     room_sales_text = (
-        f"101已售{item['101已售房晚']}晚; 201已售{item['201已售房晚']}晚; "
-        f"202已售{item['202已售房晚']}晚;\n301已售{item['301已售房晚']}晚; "
-        f"302已售{item['302已售房晚']}晚; 401已售{item['401已售房晚']}晚"
+        f"101已售{weekly_report_data['101已售房晚']}晚; 201已售{weekly_report_data['201已售房晚']}晚; "
+        f"202已售{weekly_report_data['202已售房晚']}晚;\n301已售{weekly_report_data['301已售房晚']}晚; "
+        f"302已售{weekly_report_data['302已售房晚']}晚; 401已售{weekly_report_data['401已售房晚']}晚"
     )
     draw.rectangle(
         [table_x, table_y, table_x + col_width * 3, table_y + row_height * 3],
