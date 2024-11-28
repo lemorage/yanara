@@ -90,6 +90,7 @@ class LarkTableService:
             lark.logger.error(f"Failed to fetch records: {response.code}, {response.msg}")
             return {}
 
+        # TODO: figure out a way to use `_process_response_data` to cleanse the date fields
         data_dict = json.loads(lark.JSON.marshal(response.data, indent=4))
         return data_dict
 

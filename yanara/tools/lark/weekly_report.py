@@ -32,8 +32,11 @@ def get_weekly_report_statistics(self: "Agent", which_week: int) -> list[dict]:
             },
         ]
     """
+    from datetime import datetime
+
     from yanara.api.lark_api.lark_service import LarkTableService
     from yanara.tools._internal.helpers import process_lark_data
+    from yanara.util.date import adjust_timestamp
 
     lark_service = LarkTableService("KFo5bqi26a52u2s5toJcrV6tnWb")
 
@@ -64,7 +67,48 @@ def get_weekly_report_statistics(self: "Agent", which_week: int) -> list[dict]:
         filter_value=str(which_week),
     )
 
-    return process_lark_data(raw_data)
+    def standardize_report_data(data):
+        def translate_keys(d):
+            """Translate keys and apply transformations to the values where needed."""
+            return {
+                "101已售房晚": d["101已售房晚"],
+                "201已售房晚": d["201已售房晚"],
+                "202已售房晚": d["202已售房晚"],
+                "301已售房晚": d["301已售房晚"],
+                "302已售房晚": d["302已售房晚"],
+                "401已售房晚": d["401已售房晚"],
+                "repar": d["repar"],
+                "周一日期": timestamp_to_date(d["周一日期"]),
+                "周日日期": timestamp_to_date(d["周日日期"]),
+                "周营业额": d["売上"],
+                "平均房价": d["平均房价"],
+                "总儿童数": d["总儿童数"],
+                "总晚数": d["总泊数"],
+                "订单数": d["有効注文数"],
+                "入住率": format_percentage(d["稼働率"]),
+                "第几周": d["第几周"],
+                "总接待人数": d["総人数"],
+                "总接待人晚": d["総人泊数"],
+            }
+
+        def timestamp_to_date(ts):
+            """Convert a timestamp to 'YYYY-MM-DD' format."""
+            return datetime.fromtimestamp(ts / 1000).strftime("%Y-%m-%d")
+
+        def format_percentage(value):
+            """Convert a decimal value to percentage format."""
+            return f"{value * 100:.2f}%"
+
+        return [translate_keys(data[0])]
+
+    processed_data = process_lark_data(raw_data)
+
+    # temp solution to process the data
+    # TODO: figure out a way to use _process_response_data internally before getting the records
+    processed_data[0]["周一日期"] = adjust_timestamp(processed_data[0]["周一日期"], hours=9)
+    processed_data[0]["周日日期"] = adjust_timestamp(processed_data[0]["周日日期"], hours=9)
+
+    return standardize_report_data(processed_data)
 
 
 def weekly_report_typesetting_print(self: "Agent") -> str:
