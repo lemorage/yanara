@@ -58,6 +58,7 @@ def sample_weekly_raw_data():
                     "总儿童数": {"type": 2, "value": [0]},
                     "总泊数": {"type": 2, "value": [39]},
                     "有効注文数": {"type": 2, "value": [16]},
+                    "注文平均金額": {"type": 2, "value": [39160.9375]},
                     "稼働率": {"type": 2, "value": [0.9285714285714286]},
                     "第几周": {"type": 2, "value": [38]},
                     "総人数": {"type": 2, "value": [40]},
@@ -217,6 +218,7 @@ def test_get_weekly_report_statistics(mocked_lark_service, sample_weekly_raw_dat
             "周日日期": "2024-09-22 00:00:00",
             "周营业额": 540550,
             "平均房价": 13860.25641025641,
+            "订单平均金额": 39160.9375,
             "总儿童数": 0,
             "总晚数": 39,
             "订单数": 16,
@@ -231,6 +233,6 @@ def test_get_weekly_report_statistics(mocked_lark_service, sample_weekly_raw_dat
 
     # Act
     result = get_weekly_report_statistics(None, week_number)
-
+    print("res: ", result)
     # Assert
     assert result == expected_output, f"Expected {expected_output}, but got {result}"
