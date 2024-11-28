@@ -36,7 +36,7 @@ def get_weekly_report_statistics(self: "Agent", which_week: int) -> list[dict]:
 
     from yanara.api.lark_api.lark_service import LarkTableService
     from yanara.tools._internal.helpers import process_lark_data
-    from yanara.util.date import adjust_timestamp
+    from yanara.util.date import adjust_timestamp, timestamp_to_datetime
 
     lark_service = LarkTableService("KFo5bqi26a52u2s5toJcrV6tnWb")
 
@@ -68,45 +68,39 @@ def get_weekly_report_statistics(self: "Agent", which_week: int) -> list[dict]:
     )
 
     def standardize_report_data(data):
-        def translate_keys(d):
-            """Translate keys and apply transformations to the values where needed."""
-            return {
-                "101已售房晚": d["101已售房晚"],
-                "201已售房晚": d["201已售房晚"],
-                "202已售房晚": d["202已售房晚"],
-                "301已售房晚": d["301已售房晚"],
-                "302已售房晚": d["302已售房晚"],
-                "401已售房晚": d["401已售房晚"],
-                "repar": d["repar"],
-                "周一日期": timestamp_to_date(d["周一日期"]),
-                "周日日期": timestamp_to_date(d["周日日期"]),
-                "周营业额": d["売上"],
-                "平均房价": d["平均房价"],
-                "总儿童数": d["总儿童数"],
-                "总晚数": d["总泊数"],
-                "订单数": d["有効注文数"],
-                "入住率": format_percentage(d["稼働率"]),
-                "第几周": d["第几周"],
-                "总接待人数": d["総人数"],
-                "总接待人晚": d["総人泊数"],
+        # Define the key translation and transformation map
+        key_map = {
+            "総人数": "总接待人数",
+            "総人泊数": "总接待人晚",
+            "稼働率": ("入住率", lambda v: f"{v * 100:.2f}%"),
+            "有効注文数": "订单数",
+            "总泊数": "总晚数",
+            "売上": "周营业额",
+            "周一日期": ("周一日期", lambda v: timestamp_to_datetime(v)),
+            "周日日期": ("周日日期", lambda v: timestamp_to_datetime(v)),
+        }
+
+        def translate_key_value(key, value):
+            """Translate and transform keys and values based on the map."""
+            if key in key_map:
+                new_key, transform = key_map[key] if isinstance(key_map[key], tuple) else (key_map[key], lambda x: x)
+                return new_key, transform(value)
+            return key, value
+
+        return [
+            {
+                new_key: new_value
+                for key, value in data[0].items()
+                for new_key, new_value in [translate_key_value(key, value)]
             }
-
-        def timestamp_to_date(ts):
-            """Convert a timestamp to 'YYYY-MM-DD' format."""
-            return datetime.fromtimestamp(ts / 1000).strftime("%Y-%m-%d")
-
-        def format_percentage(value):
-            """Convert a decimal value to percentage format."""
-            return f"{value * 100:.2f}%"
-
-        return [translate_keys(data[0])]
+        ]
 
     processed_data = process_lark_data(raw_data)
 
     # temp solution to process the data
     # TODO: figure out a way to use _process_response_data internally before getting the records
-    processed_data[0]["周一日期"] = adjust_timestamp(processed_data[0]["周一日期"], hours=9)
-    processed_data[0]["周日日期"] = adjust_timestamp(processed_data[0]["周日日期"], hours=9)
+    processed_data[0]["周一日期"] = adjust_timestamp(processed_data[0]["周一日期"], hours=1)
+    processed_data[0]["周日日期"] = adjust_timestamp(processed_data[0]["周日日期"], hours=1)
 
     return standardize_report_data(processed_data)
 
