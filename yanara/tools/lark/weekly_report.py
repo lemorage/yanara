@@ -25,6 +25,7 @@ def get_weekly_report_statistics(self: "Agent", which_week: int) -> list[dict]:
                 "总儿童数": 0,
                 "总晚数": 39,
                 "订单数": 16,
+                "订单平均金额": 39160.9375,
                 "入住率": "92.86%",
                 "第几周": 38,
                 "总接待人数": 40,
@@ -56,6 +57,7 @@ def get_weekly_report_statistics(self: "Agent", which_week: int) -> list[dict]:
             "売上",
             "平均房价",
             "有効注文数",
+            "注文平均金額",
             "101已售房晚",
             "201已售房晚",
             "202已售房晚",
@@ -67,13 +69,14 @@ def get_weekly_report_statistics(self: "Agent", which_week: int) -> list[dict]:
         filter_value=str(which_week),
     )
 
-    def standardize_report_data(data):
+    def standardize_report_data(data: list[dict]):
         # Define the key translation and transformation map
         key_map = {
             "総人数": "总接待人数",
             "総人泊数": "总接待人晚",
             "稼働率": ("入住率", lambda v: f"{v * 100:.2f}%"),
             "有効注文数": "订单数",
+            "注文平均金額": "订单平均金额",
             "总泊数": "总晚数",
             "売上": "周营业额",
             "周一日期": ("周一日期", lambda v: timestamp_to_datetime(v)),
@@ -188,7 +191,7 @@ def weekly_report_typesetting_print(self: "Agent", weekly_report_data: list[dict
             f"总晚数: {weekly_report_data['总晚数']}",
         ],
         [f"平均房价: {weekly_report_data['平均房价']}", f"Repar: {weekly_report_data['repar']}", ""],
-        [f"订单平均金额: 24558", f"订单数: {weekly_report_data['订单数']}", ""],
+        [f"订单平均金额: {weekly_report_data['订单平均金额']}", f"订单数: {weekly_report_data['订单数']}", ""],
         [
             f"总接待人数: {weekly_report_data['总接待人数']}",
             f"总接待人晚: {weekly_report_data['总接待人晚']}",
