@@ -18,17 +18,17 @@ def get_weekly_report_statistics(self: "Agent", which_week: int) -> list[dict]:
                 "302已售房晚": 6,
                 "401已售房晚": 7,
                 "repar": 12870.238095238095,
-                "周一日期": 1726412400000,
-                "周日日期": 1726930800000,
-                "売上": 540550,
+                "周一日期": "2024-09-16 00:00:00",
+                "周日日期": "2024-09-22 00:00:00",
+                "周营业额": 540550,
                 "平均房价": 13860.25641025641,
                 "总儿童数": 0,
-                "总泊数": 39,
-                "有効注文数": 16,
-                "稼働率": 0.9285714285714286,
+                "总晚数": 39,
+                "订单数": 16,
+                "入住率": "92.86%",
                 "第几周": 38,
-                "総人数": 40,
-                "総人泊数": 100,
+                "总接待人数": 40,
+                "总接待人晚": 100,
             },
         ]
     """
@@ -116,17 +116,18 @@ def weekly_report_typesetting_print(self: "Agent") -> str:
 
     Example:
         >>> weekly_report_typesetting_print()
-        'iVBORw0KGgoAAAANSUhEUgAAAXo
+        '/var/folders/9n/zrq49fmx27l7237gf4kj001h0000gn/T/tmpb3m53r1t.png'
         ...
     """
 
     import base64
     from datetime import datetime, timezone
     import io
+    import tempfile
 
     from PIL import Image, ImageDraw, ImageFont
 
-    with open("encoded_font.txt", "r") as encoded_file:
+    with open("yanara/tools/lark/encoded_font.txt", "r") as encoded_file:
         encoded_font = encoded_file.read()
 
     font_data = base64.b64decode(encoded_font)
@@ -251,5 +252,9 @@ def weekly_report_typesetting_print(self: "Agent") -> str:
         anchor="mm",
     )
 
-    # Save image
-    img.save("refined_table.png")
+    # Save the image to a temporary file
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_file:
+        img.save(tmp_file, format="PNG")
+        tmp_file_path = tmp_file.name
+
+    return tmp_file_path
