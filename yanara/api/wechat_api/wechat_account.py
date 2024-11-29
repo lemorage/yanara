@@ -18,10 +18,7 @@ class WeChatAccount:
         """Fetches messages for this WeChat account."""
         url = f"{self.get_service_base_path()}/v1/message/NewSyncHistoryMessage?key={self.key}"
         result = await request(url=url, data={"Scene": 3}, options={"method": "post"})
-        if result.get("Code") != 200:
-            print(f"API call failed with response: '{result}'.")
-            return []
-        return result.get("Data", {}).get("AddMsgs", []) if result else []
+        return result.get("Data", {}).get("AddMsgs", []) if result else []  # "Code" == 200
 
     async def fetch_chatroom_info(self, chatroom_id: str) -> Dict[str, Any]:
         """Fetches chatroom information for the given chatroom ID."""
