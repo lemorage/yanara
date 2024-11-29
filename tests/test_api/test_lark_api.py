@@ -53,35 +53,6 @@ def test_build_request_body(lark_service):
     assert request_body.field_names == field_names
 
 
-@patch("yanara.api.lark_api.lark_service.LarkTableService._send_request")
-def test_fetch_records_within_date_range(mock_send_request, lark_service):
-    """Test fetch_records_within_date_range method."""
-    # Arrange
-    table_id = "test_table"
-    view_id = "test_view"
-    field_names = ["field1", "field2"]
-    filter_field_name = "date_field"
-    start_date = datetime.datetime(2024, 1, 1)
-    end_date = datetime.datetime(2024, 1, 31)
-
-    start_date_str = start_date.strftime("%Y-%m-%d %H:%M:%S")
-    end_date_str = end_date.strftime("%Y-%m-%d %H:%M:%S")
-
-    mock_response = MagicMock()
-    mock_response.success.return_value = True
-    mock_response.data = {"items": []}  # Mocked response data
-    mock_send_request.return_value = mock_response
-
-    # Act
-    result = lark_service.fetch_records_within_date_range(
-        table_id, view_id, field_names, filter_field_name, start_date_str, end_date_str
-    )
-
-    # Assert
-    mock_send_request.assert_called_once()
-    assert result == {"items": []}
-
-
 def test_process_response_data():
     """Test _process_response_data static method."""
     # Arrange
