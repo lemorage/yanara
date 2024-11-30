@@ -94,6 +94,18 @@ def test_detect_from_file_not_found(languages):
 
 
 @pytest.mark.unit
+def test_detect_from_file_io_error(mocker, tmp_path, languages):
+    """Test detection from a file that causes an IOError."""
+    test_file = tmp_path / "test.txt"
+    test_file.write_text("This will trigger an IOError", encoding="utf-8")
+
+    mocker.patch("builtins.open", side_effect=IOError("Mocked IOError"))
+
+    with pytest.raises(IOError, match="Mocked IOError"):
+        detect_from_file(str(test_file), languages)
+
+
+@pytest.mark.unit
 def test_build_detector(languages):
     """Test building a detector."""
     detector = build_detector(languages)
