@@ -1,10 +1,16 @@
+import base64
 from collections import defaultdict
+import os
 from typing import Any, Dict, List, Optional
 
 from rich import print
 
 from yanara.api.wechat_api.wechat_account import WeChatAccount
 from yanara.globals import client
+from yanara.helpers.letta_message_helper import (
+    extract_file_path_from_function_return,
+    extract_message_from_function_call,
+)
 
 
 class WeChatMessageWorker:
@@ -68,10 +74,34 @@ class WeChatMessageWorker:
     async def chat(self, agent_id: str, user_id: str, nickname: str, content: str) -> None:
         """Chat with the given agent in the specified language."""
         print(f"Agent {agent_id} is chatting with nickname {nickname}")
-        if not WeChatMessageWorker.is_from_chatroom(agent_id):
+        if not WeChatMessageWorker.is_from_chatroom(user_id):
             response = client.send_message(agent_id=self.wechat_account.agent_id, role="user", message=content)
             print("debug response:", response)
-            x = await self.wechat_account.send_wechat_message(user_id, response.messages)
+            result = extract_file_path_from_function_return(response.messages)
+            if result[0]:
+                file_path = result[1]
+                if os.path.isfile(file_path):
+                    try:
+                        # Read the image from the file path
+                        with open(file_path, "rb") as img_file:
+                            img_data = img_file.read()
+                            # Encode the image data to base64
+                            img_base64 = base64.b64encode(img_data).decode("utf-8")
+
+                        # Send the image as a base64 string
+                        await self.wechat_account.send_wechat_image_message(user_id, img_base64)
+                    finally:
+                        # Delete the temporary file after use
+                        if os.path.isfile(file_path):  # Double check if the file still exists
+                            os.remove(file_path)
+                            print(f"Deleted temporary image file at {file_path}")
+                else:
+                    print(f"Error: File not found at {file_path}")
+            else:
+                x = await self.wechat_account.send_wechat_message(
+                    user_id, extract_message_from_function_call(response.messages)
+                )
+
         # TODO:
         #     return
         # else:
