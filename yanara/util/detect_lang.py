@@ -45,16 +45,14 @@ def detect_from_text(
         detected_language = detector.detect_language_of(text)
         return detected_language.name if detected_language else "Unknown"
 
+    # Compute language confidence values (guaranteed to be non-empty)
     confidence_values = detector.compute_language_confidence_values(text)
-    if confidence_values:
-        # Find the top language by maximum confidence
-        top_confidence = max(confidence_values, key=lambda c: c.value)
-        return (
-            (top_confidence.language.name, top_confidence.value)
-            if top_confidence.value >= confidence_threshold
-            else ("Unknown", 0.0)
-        )
-    return "Unknown", 0.0
+    top_confidence = max(confidence_values, key=lambda c: c.value)
+    return (
+        (top_confidence.language.name, top_confidence.value)
+        if top_confidence.value >= confidence_threshold
+        else ("Unknown", 0.0)
+    )
 
 
 def detect_from_file(
