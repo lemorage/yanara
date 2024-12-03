@@ -121,9 +121,8 @@ class WeChatMessageWorker:
     @staticmethod
     def get_nickname(push_content: str, content: str) -> str:
         """Extracts the nickname from the push content."""
-        # TODO: can get nickname also when not mentioning -> push_content.split(":", 1)[0].strip()
         if push_content is None:
             return "Unknown"
-        if content not in push_content:
-            return push_content.replace("在群聊中@了你", "").strip()
-        return push_content.replace(content, "").strip().rstrip().strip()
+        if ":" in push_content and ":" in content:
+            return push_content.split(":", 1)[0].strip()
+        return push_content.replace("在群聊中@了你", "").strip()
