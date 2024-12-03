@@ -50,7 +50,15 @@ class WeChatMessageWorker:
         return grouped_messages
 
     async def process_message(self, message: Dict[str, Any], account_key: str) -> None:
-        """Process a single message and route it."""
+        """
+        Process and route a single message.
+
+        Handles messages with an optional `push_content` field:
+        - If `push_content` is None, the message is ignored.
+        - If `push_content` is not None, it can take two forms:
+            1. "nickname : content"
+            2. "nickname 在群聊中@了你"
+        """
         from_wxid = message["from_user_name"]["str"]
         to_wxid = message["to_user_name"]["str"]
         content = message["content"]["str"]
