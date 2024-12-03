@@ -69,7 +69,7 @@ class WeChatMessageWorker:
         """Handles message routing by printing the message details."""
         print(f"Routing message from {from_wxid} to {to_wxid} with content: {content}, push content: {push_content}")
 
-        account = await self.wechat_account.get_account_by_wxid(to_wxid)
+        account = self.wechat_account.get_account_by_wxid(to_wxid)
         if not account:
             print(f"Account not found for wxid: {to_wxid}")
             return

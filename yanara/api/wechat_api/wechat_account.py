@@ -67,7 +67,7 @@ class WeChatAccount:
 
         return await request(url=url, data=data, options={"method": "post"})
 
-    async def get_account_by_wxid(self, wxid: str) -> Optional[Dict[str, Any]]:
+    def get_account_by_wxid(self, wxid: str) -> Optional[Dict[str, Any]]:
         """Find and return the account by wxid or None if not found."""
         accounts = WeChatAccount.get_wechat_accounts()
         return next((account for account in accounts if account["wxid"] == wxid), None)

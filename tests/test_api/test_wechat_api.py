@@ -264,23 +264,22 @@ async def test_route_message(
     """Test the route_message method for different scenarios."""
     # Arrange
     wechat_account_mock = Mock()
-    wechat_account_mock.get_account_by_wxid = AsyncMock(return_value=account_data)
+    wechat_account_mock.get_account_by_wxid = Mock(return_value=account_data)
 
     worker = WeChatMessageWorker([], wechat_account=wechat_account_mock)
 
-    mock_chat = mocker.patch.object(worker, "chat", return_value=asyncio.Future())
-    mock_chat.return_value.set_result(None)
+    mock_chat = mocker.patch.object(worker, "chat", return_value=None)
 
     # Act
     await worker.route_message(from_wxid, to_wxid, content, push_content)
 
     # Assert
-    wechat_account_mock.get_account_by_wxid.assert_awaited_once_with(to_wxid)
+    wechat_account_mock.get_account_by_wxid.assert_called_once_with(to_wxid)
 
     if account_data:
-        mock_chat.assert_awaited_once_with(account_data["identifier"], from_wxid, expected_nickname, content)
+        mock_chat.assert_called_once_with(account_data["identifier"], from_wxid, expected_nickname, content)
     else:
-        mock_chat.assert_not_awaited()
+        mock_chat.assert_not_called()
 
 
 @pytest.mark.unit
