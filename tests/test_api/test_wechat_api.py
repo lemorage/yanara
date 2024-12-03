@@ -1,9 +1,17 @@
 import asyncio
 from typing import Any, Dict, List
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
+from yanara.api.wechat_api.wechat_message_manager import WeChatMessageManager
 from yanara.api.wechat_api.wechat_message_worker import WeChatMessageWorker
+
+################################################
+#                                              #
+#  WeChatMessageWorker class tests (yanara)    #
+#                                              #
+################################################
 
 
 @pytest.mark.unit
@@ -207,6 +215,75 @@ def test_group_messages_by_username_multiple_users():
 
 
 @pytest.mark.unit
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "from_wxid, to_wxid, content, push_content, account_data, expected_nickname, should_call_chat",
+    [
+        # Case 1: Account found, valid push_content
+        (
+            "user1@chatroom",
+            "wxid_user1",
+            "nickname_id: Hello, how are you?",
+            "nickname: Hello, how are you?",
+            {"identifier": "agent_123"},
+            "nickname",
+            True,
+        ),
+        # Case 2: Account not found
+        (
+            "user2@chatroom",
+            "wxid_user2",
+            "nickname_id: Test message",
+            None,
+            None,
+            "Unknown",
+            False,
+        ),
+        # Case 3: Push content is void
+        (
+            "user3@chatroom",
+            "wxid_user3",
+            "nickname_id: Test message",
+            None,
+            {"identifier": "agent_456"},
+            "Unknown",
+            True,
+        ),
+    ],
+)
+async def test_route_message(
+    mocker,
+    from_wxid,
+    to_wxid,
+    content,
+    push_content,
+    account_data,
+    expected_nickname,
+    should_call_chat,
+):
+    """Test the route_message method for different scenarios."""
+    # Arrange
+    wechat_account_mock = Mock()
+    wechat_account_mock.get_account_by_wxid = AsyncMock(return_value=account_data)
+
+    worker = WeChatMessageWorker([], wechat_account=wechat_account_mock)
+
+    mock_chat = mocker.patch.object(worker, "chat", return_value=asyncio.Future())
+    mock_chat.return_value.set_result(None)
+
+    # Act
+    await worker.route_message(from_wxid, to_wxid, content, push_content)
+
+    # Assert
+    wechat_account_mock.get_account_by_wxid.assert_awaited_once_with(to_wxid)
+
+    if account_data:
+        mock_chat.assert_awaited_once_with(account_data["identifier"], from_wxid, expected_nickname, content)
+    else:
+        mock_chat.assert_not_awaited()
+
+
+@pytest.mark.unit
 @pytest.mark.parametrize(
     "from_wxid, expected",
     [
@@ -361,3 +438,37 @@ async def test_process_message(
     mock_route_message.assert_called_once_with(
         expected_from_user, expected_to_user, expected_content, expected_push_content
     )
+
+
+################################################
+#                                              #
+#  WeChatMessageManager class tests (yanara)   #
+#                                              #
+################################################
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_schedule_pulling_messages(mocker):
+    """Test the schedule_pulling_messages method."""
+    # Arrange
+    mock_account = Mock()
+    mock_account.fetch_messages = Mock(return_value=[])
+    mock_accounts = [mock_account, mock_account]
+
+    mocker.patch(
+        "yanara.api.wechat_api.wechat_account.WeChatAccount.get_wechat_accounts",
+        return_value=[{"key": "account1"}, {"key": "account2"}],
+    )
+    manager = WeChatMessageManager(agent_id="agent_123")
+    manager.accounts = mock_accounts
+
+    mock_process_account = mocker.patch.object(manager, "process_account", return_value=asyncio.Future())
+    mock_process_account.return_value.set_result(None)
+
+    # Act
+    await manager.schedule_pulling_messages()
+
+    # Assert
+    assert mock_process_account.call_count == len(manager.accounts)
+    mock_process_account.assert_any_call(mock_account)
