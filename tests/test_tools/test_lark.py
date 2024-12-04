@@ -213,12 +213,12 @@ def test_get_weekly_report_statistics(mocked_lark_service, sample_weekly_raw_dat
             "301已售房晚": 7,
             "302已售房晚": 6,
             "401已售房晚": 7,
-            "repar": 12870.238095238095,
+            "repar": 12870.24,
             "周一日期": "2024-09-16 00:00:00",
             "周日日期": "2024-09-22 00:00:00",
             "周营业额": 540550,
-            "平均房价": 13860.25641025641,
-            "订单平均金额": 39160.9375,
+            "平均房价": 13860.26,
+            "订单平均金额": 39160.94,
             "总儿童数": 0,
             "总晚数": 39,
             "订单数": 16,
@@ -233,6 +233,6 @@ def test_get_weekly_report_statistics(mocked_lark_service, sample_weekly_raw_dat
 
     # Act
     result = get_weekly_report_statistics(None, week_number)
-    print("res: ", result)
+
     # Assert
     assert result == expected_output, f"Expected {expected_output}, but got {result}"

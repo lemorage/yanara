@@ -36,7 +36,7 @@ def get_weekly_report_statistics(self: "Agent", which_week: int) -> list[dict]:
     from datetime import datetime
 
     from yanara.api.lark_api.lark_service import LarkTableService
-    from yanara.tools._internal.helpers import process_lark_data
+    from yanara.tools._internal.helpers import process_lark_data, standardize_stat_data
     from yanara.util.date import adjust_timestamp, timestamp_to_datetime
 
     lark_service = LarkTableService("KFo5bqi26a52u2s5toJcrV6tnWb")
@@ -69,34 +69,17 @@ def get_weekly_report_statistics(self: "Agent", which_week: int) -> list[dict]:
         filter_value=str(which_week),
     )
 
-    def standardize_report_data(data: list[dict]):
-        # Define the key translation and transformation map
-        key_map = {
-            "総人数": "总接待人数",
-            "総人泊数": "总接待人晚",
-            "稼働率": ("入住率", lambda v: f"{v * 100:.2f}%"),
-            "有効注文数": "订单数",
-            "注文平均金額": "订单平均金额",
-            "总泊数": "总晚数",
-            "売上": "周营业额",
-            "周一日期": ("周一日期", lambda v: timestamp_to_datetime(v)),
-            "周日日期": ("周日日期", lambda v: timestamp_to_datetime(v)),
-        }
-
-        def translate_key_value(key, value):
-            """Translate and transform keys and values based on the map."""
-            if key in key_map:
-                new_key, transform = key_map[key] if isinstance(key_map[key], tuple) else (key_map[key], lambda x: x)
-                return new_key, transform(value)
-            return key, value
-
-        return [
-            {
-                new_key: new_value
-                for key, value in data[0].items()
-                for new_key, new_value in [translate_key_value(key, value)]
-            }
-        ]
+    key_map = {
+        "総人数": "总接待人数",
+        "総人泊数": "总接待人晚",
+        "稼働率": ("入住率", lambda v: f"{v * 100:.2f}%"),
+        "有効注文数": "订单数",
+        "注文平均金額": "订单平均金额",
+        "总泊数": "总晚数",
+        "売上": "周营业额",
+        "周一日期": ("周一日期", lambda v: timestamp_to_datetime(v)),
+        "周日日期": ("周日日期", lambda v: timestamp_to_datetime(v)),
+    }
 
     processed_data = process_lark_data(raw_data)
 
@@ -105,7 +88,7 @@ def get_weekly_report_statistics(self: "Agent", which_week: int) -> list[dict]:
     processed_data[0]["周一日期"] = adjust_timestamp(processed_data[0]["周一日期"], hours=1)
     processed_data[0]["周日日期"] = adjust_timestamp(processed_data[0]["周日日期"], hours=1)
 
-    return standardize_report_data(processed_data)
+    return standardize_stat_data(processed_data, key_map)
 
 
 def weekly_report_typesetting_print(self: "Agent", weekly_report_data: list[dict]) -> str:
