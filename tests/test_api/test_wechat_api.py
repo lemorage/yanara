@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
+from yanara.api.wechat_api.wechat_account import WeChatAccount
 from yanara.api.wechat_api.wechat_message_manager import WeChatMessageManager
 from yanara.api.wechat_api.wechat_message_worker import WeChatMessageWorker
 
@@ -586,6 +587,8 @@ async def test_schedule_pulling_messages(mocker):
             ],
             False,
         ),
+        # Case 4: Empty message list, should not process
+        ([], [], False),
     ],
 )
 async def test_process_account(mocker, messages, expected_filtered_messages, should_process_messages):
@@ -619,10 +622,219 @@ async def test_process_account(mocker, messages, expected_filtered_messages, sho
     filtered_messages = [msg for msg in messages if msg["msg_type"] < 48]
     assert filtered_messages == expected_filtered_messages
 
-    if should_process_messages:
+    if should_process_messages and messages:
         worker_mock.has_incoming_message.assert_called_once()
         worker_mock.process_messages.assert_awaited_once_with(account_mock.key)
-    else:
-        print(worker_mock.has_incoming_message.call_count)
+    elif messages:
         worker_mock.has_incoming_message.assert_called_once()
         worker_mock.process_messages.assert_not_called()
+    else:
+        worker_mock.has_incoming_message.assert_not_called()
+        worker_mock.process_messages.assert_not_called()
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "messages, expected_result",
+    [
+        # Case 1: Mock response from API, should return messages list
+        (
+            {"Code": 200, "Data": {"AddMsgs": [{"msg_type": 1, "content": "Hello"}]}},
+            [{"msg_type": 1, "content": "Hello"}],
+        ),
+        # Case 2: Empty result from API
+        ({"Data": {}}, []),
+        # Case 3: API returns no result
+        (None, []),
+    ],
+)
+async def test_fetch_messages(mocker, messages, expected_result):
+    """Test fetch_messages for WeChatAccount."""
+
+    # Arrange
+    account_mock = Mock()
+    account_mock.key = "test_key"
+    mocker.patch("yanara.api.wechat_api.wechat_account.request", return_value=messages)
+
+    account = WeChatAccount(key="test_key", agent_id="test_agent")
+
+    # Act
+    result = await account.fetch_messages()
+
+    # Assert
+    assert result == expected_result
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "chatroom_id, mock_response, expected_result",
+    [
+        # Case 1: Valid response from the API
+        (
+            "chatroom_1",
+            {"Data": {"id": "chatroom_1", "name": "Test Chatroom"}},
+            {"id": "chatroom_1", "name": "Test Chatroom"},
+        ),
+        # Case 2: API returns empty data
+        ("chatroom_2", {"Data": {}}, {}),
+        # Case 3: API returns no response
+        ("chatroom_3", None, {}),
+    ],
+)
+async def test_fetch_chatroom_info(mocker, chatroom_id, mock_response, expected_result):
+    """Test fetch_chatroom_info for WeChatAccount."""
+
+    # Arrange
+    account_mock = Mock()
+    account_mock.key = "test_key"
+    mocker.patch("yanara.api.wechat_api.wechat_account.request", return_value=mock_response)
+
+    account = WeChatAccount(key="test_key", agent_id="test_agent")
+
+    # Act
+    result = await account.fetch_chatroom_info(chatroom_id)
+
+    # Assert
+    assert result == expected_result
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "user_id, content, mock_response",
+    [
+        ("user_1", "Hello!", {"status": "success"}),
+        ("user_2", "Goodbye!", {"status": "success"}),
+        ("user_3", "Hi!", {"status": "failure"}),
+    ],
+)
+async def test_send_wechat_message(mocker, user_id, content, mock_response):
+    """Test send_wechat_message for WeChatAccount."""
+
+    # Arrange
+    account_mock = Mock()
+    account_mock.key = "test_key"
+    mocker.patch("yanara.api.wechat_api.wechat_account.request", return_value=mock_response)
+
+    account = WeChatAccount(key="test_key", agent_id="test_agent")
+
+    # Act
+    result = await account.send_wechat_message(user_id, content)
+
+    # Assert
+    assert result == mock_response
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "user_id, image, mock_response",
+    [
+        ("user_1", "image_url_1", {"status": "success"}),
+        ("user_2", "image_url_2", {"status": "success"}),
+        ("user_3", "image_url_3", {"status": "failure"}),
+    ],
+)
+async def test_send_wechat_image_message(mocker, user_id, image, mock_response):
+    """Test send_wechat_image_message for WeChatAccount."""
+
+    # Arrange
+    account_mock = Mock()
+    account_mock.key = "test_key"
+    mocker.patch("yanara.api.wechat_api.wechat_account.request", return_value=mock_response)
+
+    account = WeChatAccount(key="test_key", agent_id="test_agent")
+
+    # Act
+    result = await account.send_wechat_image_message(user_id, image)
+
+    # Assert
+    assert result == mock_response
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "wxid, expected_account",
+    [
+        # Case 1: Account found
+        ("wxid_1", {"wxid": "wxid_1", "key": "test_key", "agent_id": "test_agent"}),
+        # Case 2: Account not found
+        ("wxid_999", None),
+    ],
+)
+def test_get_account_by_wxid(mocker, wxid, expected_account):
+    """Test get_account_by_wxid for WeChatAccount."""
+
+    # Arrange
+    mock_accounts = [
+        {"wxid": "wxid_1", "key": "test_key", "agent_id": "test_agent"},
+        {"wxid": "wxid_2", "key": "test_key_2", "agent_id": "test_agent_2"},
+    ]
+    mocker.patch.object(WeChatAccount, "get_wechat_accounts", return_value=mock_accounts)
+
+    account = WeChatAccount(key="test_key", agent_id="test_agent")
+
+    # Act
+    result = account.get_account_by_wxid(wxid)
+
+    # Assert
+    assert result == expected_account
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "environment, expected_path",
+    [
+        # Case 1: Environment is dev (default)
+        ("dev", "http://127.0.0.1:8011"),
+        # Case 2: Environment is prod
+        ("prod", "http://wechat-agent-service:8011"),
+    ],
+)
+def test_get_service_base_path(monkeypatch, environment, expected_path):
+    """Test get_service_base_path for WeChatAccount."""
+
+    # Arrange: Temporarily set the class variable `current_environment`
+    monkeypatch.setattr(WeChatAccount, "current_environment", environment)
+
+    account = WeChatAccount(key="test_key", agent_id="test_agent")
+
+    # Act
+    result = account.get_service_base_path()
+
+    # Assert
+    assert result == expected_path
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "file_content, expected_accounts",
+    [
+        # Case 1: Valid file content
+        (
+            '{"dev": [{"wxid": "wxid_1", "key": "test_key", "agent_id": "test_agent"}]}',
+            [{"wxid": "wxid_1", "key": "test_key", "agent_id": "test_agent"}],
+        ),
+        # Case 2: Invalid file content
+        ("invalid_json", []),
+        # Case 3: File not found
+        (None, []),
+    ],
+)
+def test_get_wechat_accounts(mocker, file_content, expected_accounts):
+    """Test get_wechat_accounts for WeChatAccount."""
+
+    # Arrange
+    config_file = "yanara/configs/wechat_account_mapping.json"
+    if file_content:
+        mocker.patch("builtins.open", mocker.mock_open(read_data=file_content))
+    else:
+        mocker.patch("builtins.open", mocker.MagicMock(side_effect=FileNotFoundError))
+
+    # Act
+    result = WeChatAccount.get_wechat_accounts()
+
+    # Assert
+    assert result == expected_accounts
