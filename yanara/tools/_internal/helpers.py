@@ -40,13 +40,7 @@ def standardize_stat_data(data: list[dict], key_map: dict) -> list[dict]:
             return new_key, transform(value)
         return key, value
 
-    round_value = lambda value: round(value, 2) if isinstance(value, float) else value
-
     return [
-        {
-            new_key: round_value(new_value)
-            for key, value in entry.items()
-            for new_key, new_value in [translate_key_value(key, value)]
-        }
+        {new_key: new_value for key, value in entry.items() for new_key, new_value in [translate_key_value(key, value)]}
         for entry in data
     ]
