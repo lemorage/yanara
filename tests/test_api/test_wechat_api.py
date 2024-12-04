@@ -471,3 +471,158 @@ async def test_schedule_pulling_messages(mocker):
     # Assert
     assert mock_process_account.call_count == len(manager.accounts)
     mock_process_account.assert_any_call(mock_account)
+
+
+@pytest.mark.asyncio
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    "messages, expected_filtered_messages, should_process_messages",
+    [
+        # Case 1: All valid messages with msg_type 1, should process
+        (
+            [
+                {
+                    "msg_type": 1,
+                    "content": {"str": "Message 1"},
+                    "from_user_name": {"str": "user123"},
+                    "to_user_name": {"str": "agent123"},
+                    "push_content": "nicky : Hello",
+                },
+                {
+                    "msg_type": 1,
+                    "content": {"str": "Message 2"},
+                    "from_user_name": {"str": "user456"},
+                    "to_user_name": {"str": "agent456"},
+                    "push_content": "micky : Howdy",
+                },
+            ],
+            [
+                {
+                    "msg_type": 1,
+                    "content": {"str": "Message 1"},
+                    "from_user_name": {"str": "user123"},
+                    "to_user_name": {"str": "agent123"},
+                    "push_content": "nicky : Hello",
+                },
+                {
+                    "msg_type": 1,
+                    "content": {"str": "Message 2"},
+                    "from_user_name": {"str": "user456"},
+                    "to_user_name": {"str": "agent456"},
+                    "push_content": "micky : Howdy",
+                },
+            ],
+            True,
+        ),
+        # Case 2: Some messages with non-msg_type 1, should not process
+        (
+            [
+                {
+                    "msg_type": 1,
+                    "content": {"str": "Message 1"},
+                    "from_user_name": {"str": "user1"},
+                    "to_user_name": {"str": "user2"},
+                    "push_content": "nickname : Hello",
+                },
+                {
+                    "msg_type": 47,
+                    "content": {"str": "Message 2"},
+                    "from_user_name": {"str": "user2"},
+                    "to_user_name": {"str": "user1"},
+                    "push_content": None,
+                },
+                {
+                    "msg_type": 49,
+                    "content": {"str": "Message 3"},
+                    "from_user_name": {"str": "user3"},
+                    "to_user_name": {"str": "user4"},
+                    "push_content": None,
+                },
+            ],
+            [
+                {
+                    "msg_type": 1,
+                    "content": {"str": "Message 1"},
+                    "from_user_name": {"str": "user1"},
+                    "to_user_name": {"str": "user2"},
+                    "push_content": "nickname : Hello",
+                },
+                {
+                    "msg_type": 47,
+                    "content": {"str": "Message 2"},
+                    "from_user_name": {"str": "user2"},
+                    "to_user_name": {"str": "user1"},
+                    "push_content": None,
+                },
+            ],
+            False,
+        ),
+        # Case 3: No valid messages (no msg_type 1), should not process
+        (
+            [
+                {
+                    "msg_type": 47,
+                    "content": {"str": "Message 2"},
+                    "from_user_name": {"str": "user1"},
+                    "to_user_name": {"str": "user2"},
+                    "push_content": None,
+                },
+                {
+                    "msg_type": 49,
+                    "content": {"str": "Message 3"},
+                    "from_user_name": {"str": "user3"},
+                    "to_user_name": {"str": "user4"},
+                    "push_content": None,
+                },
+            ],
+            [
+                {
+                    "msg_type": 47,
+                    "content": {"str": "Message 2"},
+                    "from_user_name": {"str": "user1"},
+                    "to_user_name": {"str": "user2"},
+                    "push_content": None,
+                }
+            ],
+            False,
+        ),
+    ],
+)
+async def test_process_account(mocker, messages, expected_filtered_messages, should_process_messages):
+    """Test the process_account method of WeChatMessageManager."""
+
+    # Arrange
+    account_mock = Mock()
+    account_mock.fetch_messages = AsyncMock(return_value=messages)
+    account_mock.key = "f93740hd921038"
+
+    mock_account = {"identifier": "agent_123"}
+    account_mock.get_account_by_wxid = Mock(return_value=mock_account)
+
+    worker_mock = Mock()
+    worker_mock.has_incoming_message = Mock(return_value=True if should_process_messages else False)
+    worker_mock.process_messages = AsyncMock()
+
+    mock_wechat_account = Mock()
+    mock_wechat_account.agent_id = "agent_123"
+
+    worker_mock.wechat_account = mock_wechat_account
+
+    mocker.patch("yanara.api.wechat_api.wechat_message_manager.WeChatMessageWorker", return_value=worker_mock)
+
+    manager = WeChatMessageManager(agent_id="agent_123")
+
+    # Act
+    await manager.process_account(account_mock)
+
+    # Assert: Check if messages were filtered correctly
+    filtered_messages = [msg for msg in messages if msg["msg_type"] < 48]
+    assert filtered_messages == expected_filtered_messages
+
+    if should_process_messages:
+        worker_mock.has_incoming_message.assert_called_once()
+        worker_mock.process_messages.assert_awaited_once_with(account_mock.key)
+    else:
+        print(worker_mock.has_incoming_message.call_count)
+        worker_mock.has_incoming_message.assert_called_once()
+        worker_mock.process_messages.assert_not_called()
