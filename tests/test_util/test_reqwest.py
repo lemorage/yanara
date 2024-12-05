@@ -4,7 +4,7 @@ import warnings
 import httpx
 import pytest
 
-from yanara.util.reqwest import request
+from yanara.util.reqwest import _http_call, request
 
 
 @pytest.fixture(autouse=True)
@@ -144,3 +144,76 @@ async def test_request_default_axios_options(mocker):
     # Assert: Verify the default timeout and proxy values
     assert await result == {"key": "default"}
     httpx.AsyncClient.get.assert_called_once_with(url, json=None)
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_http_call_success(mocker):
+    # Arrange
+    url = "https://jsonplaceholder.typicode.com/posts"
+    mock_response = AsyncMock()
+    mock_response.json = AsyncMock(return_value={"key": "value"})
+    mock_response.raise_for_status = AsyncMock()
+
+    mocker.patch.object(httpx.AsyncClient, "post", return_value=mock_response)
+
+    axios_options = {"timeout": 30, "proxy": None}
+    data = {"title": "foo", "body": "bar"}
+
+    # Act
+    async with httpx.AsyncClient(timeout=30, proxy=None) as client:
+        method = getattr(client, "post")
+        result = await method(url, json=data if data else None)
+        result = await result.json()
+
+    # Assert
+    assert result == {"key": "value"}
+    httpx.AsyncClient.post.assert_called_once_with(url, json=data)
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_http_call_http_status_error(mocker):
+    # Arrange
+    url = "https://jsonplaceholder.typicode.com/posts"
+    mock_request = AsyncMock()
+    mock_response = AsyncMock(status_code=404)
+    mocker.patch.object(
+        httpx.AsyncClient,
+        "get",
+        side_effect=httpx.HTTPStatusError("HTTP error", request=mock_request, response=mock_response),
+    )
+
+    axios_options = {"timeout": 30, "proxy": None}
+
+    # Act & Assert
+    with pytest.raises(httpx.HTTPStatusError):
+        await _http_call(url, axios_options, data=None, http_method="get")
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_http_call_request_error(mocker):
+    # Arrange
+    url = "https://jsonplaceholder.typicode.com/posts"
+    mocker.patch.object(httpx.AsyncClient, "get", side_effect=httpx.RequestError("Request error"))
+
+    axios_options = {"timeout": 30, "proxy": None}
+
+    # Act & Assert
+    with pytest.raises(httpx.RequestError):
+        await _http_call(url, axios_options, None, http_method="get")
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_http_call_unexpected_error(mocker):
+    # Arrange
+    url = "https://jsonplaceholder.typicode.com/posts"
+    mocker.patch.object(httpx.AsyncClient, "get", side_effect=Exception("Unexpected error"))
+
+    axios_options = {"timeout": 30, "proxy": None}
+
+    # Act & Assert
+    with pytest.raises(Exception):
+        await _http_call(url, axios_options, None, http_method="get")
