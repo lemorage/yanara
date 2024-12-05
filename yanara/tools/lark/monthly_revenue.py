@@ -1,13 +1,13 @@
-def get_monthly_revenue_statistics(self: "Agent", check_in: str, check_out: str) -> list[dict]:
+def get_monthly_revenue_statistics(self: "Agent", start_date: str, end_date: str) -> list[dict]:
     """
-    Retrieve monthly revenue statistics for a specified date range.
+    Retrieve detailed monthly revenue statistics for a given date range.
 
     Args:
-        check_in (str): The start date of the query in 'YYYY-MM-DD' or 'YYYY-MM-DD HH:MM:SS' format.
-        check_out (str): The end date of the query in 'YYYY-MM-DD' or 'YYYY-MM-DD HH:MM:SS' format.
+        start_date (str): The start date of the query in the format 'YYYY-MM-DD' or 'YYYY-MM-DD HH:MM:SS'.
+        end_date (str): The end date of the query in the format 'YYYY-MM-DD' or 'YYYY-MM-DD HH:MM:SS'.
 
     Returns:
-        list[dict]: A list of dictionaries, each representing monthly revenue statistics.
+        list[dict]: A list of dictionaries, where each dictionary contains revenue statistics for a specific month.
 
     Example:
         >>> get_monthly_revenue_statistics("2024-04-01", "2024-05-01")
@@ -42,9 +42,9 @@ def get_monthly_revenue_statistics(self: "Agent", check_in: str, check_out: str)
     """
     from yanara.api.lark_api.lark_service import LarkTableService
     from yanara.tools._internal.helpers import process_lark_data, standardize_stat_data
-    from yanara.util.date import format_date_range
+    from yanara.util.date import adjust_timestamp, format_date_range, timestamp_to_datetime
 
-    formatted_check_in, formatted_check_out = format_date_range(check_in, check_out)
+    formatted_start_date, formatted_end_date = format_date_range(start_date, end_date)
 
     lark_service = LarkTableService("DJJ2bdtuPalDEBsJbijcwnV6n1g")
 
@@ -65,17 +65,22 @@ def get_monthly_revenue_statistics(self: "Agent", check_in: str, check_out: str)
             "每晚均价",
         ],
         filter_field_name="月初",
-        start_date=formatted_check_in,
-        end_date=formatted_check_out,
+        start_date=formatted_start_date,
+        end_date=formatted_end_date,
     )
 
     key_map = {
-        "売上": "周营业额",
+        "売上": "销售额",
         "収入": "收入",
         "已平": "已结账",
         "未平": "未结账",
         "利益": ("利益", lambda v: round(v, 2)),
         "月总盈余": ("月总盈余", lambda v: round(v, 2)),
+        "月末": ("月末", lambda v: timestamp_to_datetime(v)),
     }
 
-    return standardize_stat_data(process_lark_data(raw_data), key_map)
+    processed_data = process_lark_data(raw_data)
+
+    processed_data = [{**data, "月末": adjust_timestamp(data["月末"], hours=1)} for data in processed_data]
+
+    return standardize_stat_data(processed_data, key_map)
