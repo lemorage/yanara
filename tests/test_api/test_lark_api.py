@@ -66,7 +66,7 @@ def test_process_response_data():
     assert "items" in result
     assert "fields" in result["items"][0]
     assert "date_field" in result["items"][0]["fields"]
-    assert isinstance(result["items"][0]["fields"]["date_field"], str)
+    assert isinstance(result["items"][0]["fields"]["date_field"], (int, float))
 
 
 @patch("yanara.util.config.get_lark_app_id_and_secret")

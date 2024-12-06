@@ -23,7 +23,7 @@ def sample_room_availability_raw_data():
                 "fields": {
                     "两室家庭房401库存": {"type": 2, "value": [0]},
                     "家庭房101库存": {"type": 2, "value": [0]},
-                    "日期": "2024-11-15 00:00:00",
+                    "日期": 1731600000000,
                     "浴缸双床房301库存": {"type": 2, "value": [0]},
                     "淋浴双床房201库存": {"type": 2, "value": [0]},
                     "淋浴大床房202库存": {"type": 2, "value": [1]},
@@ -52,8 +52,8 @@ def sample_weekly_raw_data():
                     "302已售房晚": {"type": 2, "value": [6]},
                     "401已售房晚": {"type": 2, "value": [7]},
                     "repar": {"type": 2, "value": [12870.238095238095]},
-                    "周一日期": 1726412400000,
-                    "周日日期": {"type": 5, "value": [1726930800000]},
+                    "周一日期": 1726416000000,
+                    "周日日期": {"type": 5, "value": [1726934400000]},
                     "売上": {"type": 2, "value": [540550]},
                     "平均房价": {"type": 2, "value": [13860.25641025641]},
                     "总儿童数": {"type": 2, "value": [0]},
@@ -86,9 +86,9 @@ def sample_monthly_revenue_raw_data():
                     "売上": {"type": 2, "value": [0]},
                     "已平": {"type": 2, "value": [0]},
                     "总房晚数": {"type": 2, "value": [0]},
-                    "月初": "2024-04-01 00:00:00",
+                    "月初": 1711900800000,
                     "月总盈余": {"type": 2, "value": [-1567844.2857142857]},
-                    "月末": {"type": 5, "value": [1714402800000]},
+                    "月末": {"type": 5, "value": [1714406400000]},
                     "未平": {"type": 2, "value": [0]},
                     "每晚均价": {"type": 2, "value": [0]},
                 },
@@ -102,9 +102,9 @@ def sample_monthly_revenue_raw_data():
                     "売上": {"type": 2, "value": [0]},
                     "已平": {"type": 2, "value": [0]},
                     "总房晚数": {"type": 2, "value": [0]},
-                    "月初": "2024-05-01 00:00:00",
+                    "月初": 1714492800000,
                     "月总盈余": {"type": 2, "value": [-1293900.2857142857]},
-                    "月末": {"type": 5, "value": [1717081200000]},
+                    "月末": {"type": 5, "value": [1717084800000]},
                     "未平": {"type": 2, "value": [0]},
                     "每晚均价": {"type": 2, "value": [0]},
                 },
@@ -172,7 +172,7 @@ def test_lookup_room_availability_by_date(mock_lark_service, mocked_lark_service
 def test_get_weekly_report_statistics(mock_lark_service, mocked_lark_service_for_weekly_report):
     """Test the `get_weekly_report_statistics` function."""
     # Arrange
-    week_number = "38"
+    week_number = 38
     expected_output = [
         {
             "101已售房晚": 6,

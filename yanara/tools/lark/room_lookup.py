@@ -24,8 +24,8 @@ def lookup_room_availability_by_date(self: "Agent", check_in: str, check_out: st
         ]
     """
     from yanara.api.lark_api.lark_service import LarkTableService
-    from yanara.tools._internal.helpers import process_lark_data
-    from yanara.util.date import format_date_range
+    from yanara.tools._internal.helpers import process_lark_data, standardize_stat_data
+    from yanara.util.date import format_date_range, timestamp_to_datetime
 
     formatted_check_in, formatted_check_out = format_date_range(check_in, check_out)
 
@@ -49,4 +49,10 @@ def lookup_room_availability_by_date(self: "Agent", check_in: str, check_out: st
         end_date=formatted_check_out,
     )
 
-    return process_lark_data(raw_data)
+    key_map = {
+        "日期": ("日期", lambda v: timestamp_to_datetime(v)),
+    }
+
+    processed_data = process_lark_data(raw_data)
+
+    return standardize_stat_data(processed_data, key_map)

@@ -76,11 +76,10 @@ def get_monthly_revenue_statistics(self: "Agent", start_date: str, end_date: str
         "未平": "未结账",
         "利益": ("利益", lambda v: round(v, 2)),
         "月总盈余": ("月总盈余", lambda v: round(v, 2)),
+        "月初": ("月初", lambda v: timestamp_to_datetime(v)),
         "月末": ("月末", lambda v: timestamp_to_datetime(v)),
     }
 
     processed_data = process_lark_data(raw_data)
-
-    processed_data = [{**data, "月末": adjust_timestamp(data["月末"], hours=1)} for data in processed_data]
 
     return standardize_stat_data(processed_data, key_map)

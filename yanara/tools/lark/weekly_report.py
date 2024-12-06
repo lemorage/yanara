@@ -85,11 +85,6 @@ def get_weekly_report_statistics(self: "Agent", which_week: int) -> list[dict]:
 
     processed_data = process_lark_data(raw_data)
 
-    # temp solution to process the data
-    # TODO: figure out a way to use _process_response_data internally before getting the records
-    processed_data[0]["周一日期"] = adjust_timestamp(processed_data[0]["周一日期"], hours=1)
-    processed_data[0]["周日日期"] = adjust_timestamp(processed_data[0]["周日日期"], hours=1)
-
     return standardize_stat_data(processed_data, key_map)
 
 

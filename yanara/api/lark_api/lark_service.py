@@ -91,9 +91,8 @@ class LarkTableService:
             lark.logger.error(f"Failed to fetch records: {response.code}, {response.msg}")
             return {}
 
-        # TODO: figure out a way to use `_process_response_data` to cleanse the date fields
         data_dict = json.loads(lark.JSON.marshal(response.data, indent=4))
-        return data_dict
+        return self._process_response_data(response.data, filter_field_name)
 
     @staticmethod
     def _build_date_filter_conditions(
@@ -184,7 +183,7 @@ class LarkTableService:
     @staticmethod
     def _process_response_data(data: str, filter_field_name: str) -> dict:
         """
-        Processes API response data and adjusts timestamp fields.
+        Processes API response data and adjusts timestamp fields, including special cases.
 
         Args:
             data (str): The raw JSON response data.
@@ -194,16 +193,35 @@ class LarkTableService:
             dict: Processed data with adjusted timestamps.
         """
         data_dict = json.loads(lark.JSON.marshal(data, indent=4))
+
+        is_timestamp = lambda val: isinstance(val, (int, float)) and 10**9 < val < 10**13
+
         data_dict["items"] = [
             {
                 **item,
                 "fields": {
-                    **item["fields"],
-                    filter_field_name: timestamp_to_datetime(
-                        adjust_timestamp(item["fields"][filter_field_name], hours=1)
-                    ),
+                    **{
+                        # Transform standard fields if they match filter_field_name
+                        key: (
+                            adjust_timestamp(value, hours=1)
+                            if key == filter_field_name and isinstance(value, (int, float))
+                            else value
+                        )
+                        for key, value in item["fields"].items()
+                    },
+                    **{
+                        # Special case: Handle fields in the form "field_name: field_value"
+                        key: (
+                            adjust_timestamp(value, hours=1)
+                            if isinstance(value, (int, float)) and is_timestamp(value)
+                            else value
+                        )
+                        for key, value in item["fields"].items()
+                        if not isinstance(value, dict)  # Identify fields in the "field_name: field_value" form
+                    },
                 },
             }
             for item in data_dict["items"]
         ]
+
         return data_dict
