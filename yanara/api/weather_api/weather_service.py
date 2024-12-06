@@ -1,5 +1,3 @@
-from typing import Dict, Optional, Tuple, Union
-
 from geopy.exc import GeocoderTimedOut
 from geopy.geocoders import Nominatim
 import httpx
@@ -44,7 +42,7 @@ class WeatherService:
         self.geolocator = Nominatim(user_agent=user_agent)
         self.client = httpx.Client()
 
-    def get_weather(self, location: str) -> Dict[str, Union[str, float]]:
+    def get_weather(self, location: str) -> dict[str, str | float]:
         """
         Get the current weather for a given location.
         Combines geocoding, weather API calls, and adds timezone info.
@@ -63,7 +61,7 @@ class WeatherService:
         weather_data["timezone"] = self.get_timezone(lat, lon)
         return weather_data
 
-    def get_lat_lon(self, location: str) -> Optional[Tuple[float, float]]:
+    def get_lat_lon(self, location: str) -> tuple[float | None, float | None]:
         """
         Get the latitude and longitude of a location.
         Returns None if the location is not found or an error occurs.
@@ -93,7 +91,7 @@ class WeatherService:
             print(f"Error during timezone lookup: {e}")
         return "UTC"  # Fallback to UTC if timezone cannot be determined.
 
-    def _fetch_weather(self, latitude: float, longitude: float) -> Dict[str, Union[str, float]]:
+    def _fetch_weather(self, latitude: float, longitude: float) -> dict[str, str | float]:
         """
         Fetch weather information from the Open-Meteo API using latitude and longitude.
         """

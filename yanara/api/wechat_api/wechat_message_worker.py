@@ -1,7 +1,7 @@
 import base64
 from collections import defaultdict
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from rich import print
 
@@ -14,7 +14,7 @@ from yanara.helpers.letta_message_helper import (
 
 
 class WeChatMessageWorker:
-    def __init__(self, messages: List[Dict[str, Any]], wechat_account: WeChatAccount) -> None:
+    def __init__(self, messages: list[dict[str, Any]], wechat_account: WeChatAccount) -> None:
         """Initialize with the list of messages and a WeChatAccount instance."""
         self.messages = messages
         self.wechat_account = wechat_account
@@ -25,7 +25,7 @@ class WeChatMessageWorker:
             item["msg_type"] != 1 for item in self.messages
         )
 
-    def extract_usernames(self) -> List[str]:
+    def extract_usernames(self) -> list[str]:
         """Extract distinct 'from_user_name' from messages."""
         return list({item["from_user_name"]["str"] for item in self.messages})
 
@@ -38,7 +38,7 @@ class WeChatMessageWorker:
             for message in user_messages:
                 await self.process_message(message, account_key)
 
-    def group_messages_by_username(self) -> Dict[str, List[Dict[str, Any]]]:
+    def group_messages_by_username(self) -> dict[str, list[dict[str, Any]]]:
         """
         Group all messages by their 'from_user_name'.
         Returns a dictionary where keys are usernames, and values are lists of messages.
@@ -49,7 +49,7 @@ class WeChatMessageWorker:
             grouped_messages[username].append(message)
         return grouped_messages
 
-    async def process_message(self, message: Dict[str, Any], account_key: str) -> None:
+    async def process_message(self, message: dict[str, Any], account_key: str) -> None:
         """
         Process and route a single message.
 
@@ -65,7 +65,7 @@ class WeChatMessageWorker:
         push_content = message.get("push_content")
         await self.route_message(from_wxid, to_wxid, content, push_content)
 
-    async def route_message(self, from_wxid: str, to_wxid: str, content: str, push_content: Optional[str]) -> None:
+    async def route_message(self, from_wxid: str, to_wxid: str, content: str, push_content: str | None) -> None:
         """Handles message routing by printing the message details."""
         print(f"Routing message from {from_wxid} to {to_wxid} with content: {content}, push content: {push_content}")
 
@@ -122,7 +122,7 @@ class WeChatMessageWorker:
         return "@chatroom" in from_wxid
 
     @staticmethod
-    def is_mention(content: str, nicknames: List[str]) -> bool:
+    def is_mention(content: str, nicknames: list[str]) -> bool:
         """Checks if the content mentions any of the given nicknames."""
         return any(nickname in content for nickname in nicknames)
 

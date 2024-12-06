@@ -1,12 +1,10 @@
-from typing import List, Tuple, Union
-
 from lingua import Language, LanguageDetectorBuilder
 
 # Current languages supported by the agents
-LANGUAGES: List[Language] = [Language.ENGLISH, Language.CHINESE, Language.JAPANESE]
+LANGUAGES: list[Language] = [Language.ENGLISH, Language.CHINESE, Language.JAPANESE]
 
 
-def build_detector(languages: List[Language]):
+def build_detector(languages: list[Language]):
     """
     Build and return a language detector instance.
 
@@ -22,8 +20,8 @@ def build_detector(languages: List[Language]):
 
 
 def detect_from_text(
-    text: str, languages: List[Language], confidence_threshold: float = None
-) -> Union[str, Tuple[str, float]]:
+    text: str, languages: list[Language], confidence_threshold: float = None
+) -> str | tuple[str, float]:
     """
     Detect the language from a single text with optional confidence.
 
@@ -33,7 +31,7 @@ def detect_from_text(
         confidence_threshold (float): Confidence threshold (optional).
 
     Returns:
-        Union[str, Tuple[str, float]]:
+        str | tuple[str, float]:
             Detected language name or (language, confidence) tuple if threshold is set.
     """
     detector = build_detector(languages)
@@ -56,8 +54,8 @@ def detect_from_text(
 
 
 def detect_from_file(
-    file_path: str, languages: List[Language], confidence_threshold: float = None
-) -> Union[str, Tuple[str, float]]:
+    file_path: str, languages: list[Language], confidence_threshold: float = None
+) -> str | tuple[str, float]:
     """
     Detect the language from text in a file.
 
@@ -67,7 +65,7 @@ def detect_from_file(
         confidence_threshold (float): Confidence threshold (optional).
 
     Returns:
-        Union[str, Tuple[str, float]]:
+        str | tuple[str, float]:
             Detected language name or (language, confidence) tuple if threshold is set.
     """
     try:
@@ -81,8 +79,8 @@ def detect_from_file(
 
 
 def detect_bulk(
-    texts: List[str], languages: List[Language], confidence_threshold: float = None
-) -> Union[List[str], List[Tuple[str, float]]]:
+    texts: list[str], languages: list[Language], confidence_threshold: float = None
+) -> list[str] | list[tuple[str, float]]:
     """
     Detect languages for multiple texts in bulk.
 
@@ -92,7 +90,7 @@ def detect_bulk(
         confidence_threshold (float): Confidence threshold (optional).
 
     Returns:
-        Union[List[str], List[Tuple[str, float]]]:
+        list[str] | list[tuple[str, float]]:
             List of detected languages or (language, confidence) tuples if threshold is set.
     """
     return [detect_from_text(text, languages, confidence_threshold) for text in texts]

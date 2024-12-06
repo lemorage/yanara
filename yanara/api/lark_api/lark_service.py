@@ -1,6 +1,6 @@
 import datetime
 import json
-from typing import Dict, List
+from typing import Any
 
 import lark_oapi as lark
 from lark_oapi.api.bitable.v1 import *
@@ -32,24 +32,24 @@ class LarkTableService:
         self,
         table_id: str,
         view_id: str,
-        field_names: List[str],
+        field_names: list[str],
         filter_field_name: str,
         start_date: datetime.datetime,
         end_date: datetime.datetime,
-    ) -> Dict:
+    ) -> dict[str, Any]:
         """
         Fetches records filtered by a date range from a Lark table.
 
         Args:
             table_id (str): The ID of the table to fetch data from.
             view_id (str): The view ID for the table.
-            field_names (List[str]): The names of fields to include in the results.
+            field_names (list[str]): The names of fields to include in the results.
             filter_field_name (str): The field name to filter records by.
             start_date (datetime.datetime): The start date for filtering.
             end_date (datetime.datetime): The end date for filtering.
 
         Returns:
-            Dict: A dictionary containing the filtered records with adjusted date fields.
+            dict: A dictionary containing the filtered records with adjusted date fields.
         """
         filter_conditions = self._build_date_filter_conditions(filter_field_name, start_date, end_date)
         request_body = self._build_request_body(view_id, field_names, filter_conditions)
@@ -59,28 +59,29 @@ class LarkTableService:
             lark.logger.error(f"Failed to fetch records: {response.code}, {response.msg}")
             return {}
 
+        data_dict = json.loads(lark.JSON.marshal(response.data, indent=4))
         return self._process_response_data(response.data, filter_field_name)
 
     def fetch_records_with_exact_value(
         self,
         table_id: str,
         view_id: str,
-        field_names: List[str],
+        field_names: list[str],
         filter_field_name: str,
         filter_value: str,
-    ) -> Dict:
+    ) -> dict[str, Any]:
         """
         Fetches records filtered by an exact value for a specific field in a Lark table.
 
         Args:
             table_id (str): The ID of the table to fetch data from.
             view_id (str): The view ID for the table.
-            field_names (List[str]): The names of fields to include in the results.
+            field_names (list[str]): The names of fields to include in the results.
             filter_field_name (str): The field name to filter records by.
             filter_value (str): The value to filter records by (exact match).
 
         Returns:
-            Dict: A dictionary containing the filtered records.
+            dict: A dictionary containing the filtered records.
         """
         filter_conditions = self._build_exact_value_filter_conditions(filter_field_name, filter_value)
         request_body = self._build_request_body(view_id, field_names, filter_conditions)
@@ -97,7 +98,7 @@ class LarkTableService:
     @staticmethod
     def _build_date_filter_conditions(
         field_name: str, start_date: datetime.datetime, end_date: datetime.datetime
-    ) -> List[Condition]:
+    ) -> list[Condition]:
         """
         Creates filter conditions for a date range on a specified field.
 
@@ -107,7 +108,7 @@ class LarkTableService:
             end_date (datetime.datetime): The end date for filtering.
 
         Returns:
-            List[Condition]: A list of filter conditions.
+            list[Condition]: A list of filter conditions.
         """
         return [
             Condition.builder()
@@ -123,7 +124,7 @@ class LarkTableService:
         ]
 
     @staticmethod
-    def _build_exact_value_filter_conditions(field_name: str, val: str) -> List[Condition]:
+    def _build_exact_value_filter_conditions(field_name: str, val: str) -> list[Condition]:
         """
         Creates filter conditions for a specific field where the value must match exactly.
 
@@ -132,21 +133,21 @@ class LarkTableService:
             val (str): The exact value to filter by.
 
         Returns:
-            List[Condition]: A list of filter conditions that match the exact value.
+            list[Condition]: A list of filter conditions that match the exact value.
         """
         return [Condition.builder().field_name(field_name).operator("is").value([val]).build()]
 
     @staticmethod
     def _build_request_body(
-        view_id: str, field_names: List[str], filter_conditions: List[Condition]
+        view_id: str, field_names: list[str], filter_conditions: list[Condition]
     ) -> SearchAppTableRecordRequestBody:
         """
         Constructs the request body for fetching records.
 
         Args:
             view_id (str): The view ID for the table.
-            field_names (List[str]): Fields to include in the response.
-            filter_conditions (List[Condition]): Filter conditions for the request.
+            field_names (list[str]): Fields to include in the response.
+            filter_conditions (list[Condition]): Filter conditions for the request.
 
         Returns:
             SearchAppTableRecordRequestBody: The request body.
@@ -181,7 +182,7 @@ class LarkTableService:
         return self.client.bitable.v1.app_table_record.search(request)
 
     @staticmethod
-    def _process_response_data(data: str, filter_field_name: str) -> Dict:
+    def _process_response_data(data: str, filter_field_name: str) -> dict:
         """
         Processes API response data and adjusts timestamp fields.
 
@@ -190,7 +191,7 @@ class LarkTableService:
             filter_field_name (str): The field name whose timestamps will be adjusted.
 
         Returns:
-            Dict: Processed data with adjusted timestamps.
+            dict: Processed data with adjusted timestamps.
         """
         data_dict = json.loads(lark.JSON.marshal(data, indent=4))
         data_dict["items"] = [

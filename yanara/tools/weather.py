@@ -1,7 +1,4 @@
-from typing import Dict, Union
-
-
-def get_weather_forecast_by_location(self: "Agent", location: str) -> dict:  # TODO Dict[str, Union[str, float]]:
+def get_weather_forecast_by_location(self: "Agent", location: str) -> dict[str, str | float]:
     """
     Get the current weather for a given location.
 
@@ -9,7 +6,7 @@ def get_weather_forecast_by_location(self: "Agent", location: str) -> dict:  # T
         location (str): The name of the location for which to retrieve weather information.
 
     Returns:
-        dict: A dictionary containing weather data, including local time, temperature,
+        dict[str, str | float]: A dictionary containing weather data, including local time, temperature,
         wind speed, wind direction, weather description, and whether it's day or night.
 
     Example:

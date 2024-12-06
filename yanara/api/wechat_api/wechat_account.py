@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from rich import print
 
@@ -14,13 +14,13 @@ class WeChatAccount:
         self.key = key
         self.agent_id = agent_id
 
-    async def fetch_messages(self) -> List[Dict[str, Any]]:
+    async def fetch_messages(self) -> list[dict[str, Any]]:
         """Fetches messages for this WeChat account."""
         url = f"{self.get_service_base_path()}/v1/message/NewSyncHistoryMessage?key={self.key}"
         result = await request(url=url, data={"Scene": 3}, options={"method": "post"})
         return result.get("Data", {}).get("AddMsgs", []) if result else []  # "Code" == 200
 
-    async def fetch_chatroom_info(self, chatroom_id: str) -> Dict[str, Any]:
+    async def fetch_chatroom_info(self, chatroom_id: str) -> dict[str, Any]:
         """Fetches chatroom information for the given chatroom ID."""
         url = f"{self.get_service_base_path()}/v1/chatroom/GetChatRoomInfo?key={self.key}"
         result = await request(url=url, data={"ChatRoomWxIdList": [chatroom_id]}, options={"method": "post"})
@@ -67,7 +67,7 @@ class WeChatAccount:
 
         return await request(url=url, data=data, options={"method": "post"})
 
-    def get_account_by_wxid(self, wxid: str) -> Optional[Dict[str, Any]]:
+    def get_account_by_wxid(self, wxid: str) -> dict[str, Any] | None:
         """Find and return the account by wxid or None if not found."""
         accounts = WeChatAccount.get_wechat_accounts()
         return next((account for account in accounts if account["wxid"] == wxid), None)
@@ -85,7 +85,7 @@ class WeChatAccount:
         return cls.current_environment.lower() == "prod"
 
     @staticmethod
-    def get_wechat_accounts() -> List[Dict[str, Any]]:
+    def get_wechat_accounts() -> list[dict[str, Any]]:
         """Retrieve WeChat accounts configuration from the environment."""
         environment = WeChatAccount.current_environment
         config_file = "yanara/configs/wechat_account_mapping.json"

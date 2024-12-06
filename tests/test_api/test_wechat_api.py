@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Dict, List
+from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -77,7 +77,7 @@ from yanara.api.wechat_api.wechat_message_worker import WeChatMessageWorker
         ([], []),
     ],
 )
-async def test_process_messages(messages: List[Dict[str, Any]], expected_usernames: List[str], mocker) -> None:
+async def test_process_messages(messages: list[dict[str, Any]], expected_usernames: list[str], mocker) -> None:
     """Test the process_messages method with different scenarios."""
     # Arrange
     worker = WeChatMessageWorker(messages, wechat_account=mocker.Mock())

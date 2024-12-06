@@ -2,7 +2,6 @@ import base64
 import datetime
 import json
 import os
-from typing import Any, List, Optional, Tuple, Union
 
 from letta.schemas.letta_message import (
     AssistantMessage,
@@ -16,7 +15,7 @@ from letta.schemas.letta_message import (
 )
 
 
-def extract_message_from_function_call(messages: List[LettaMessage]) -> Optional[str]:
+def extract_message_from_function_call(messages: list[LettaMessage]) -> str | None:
     """
     Extracts a message string from a list of LettaMessage objects.
 
@@ -25,10 +24,10 @@ def extract_message_from_function_call(messages: List[LettaMessage]) -> Optional
     and retrieves the "message" field if present.
 
     Args:
-        messages (List[LettaMessage]): A list of messages to search through.
+        messages (list[LettaMessage]): A list of messages to search through.
 
     Returns:
-        Optional[str]: The extracted message string if found, or None if no
+        str | None: The extracted message string if found, or None if no
         valid message could be extracted.
     """
     for message in messages:
@@ -42,7 +41,7 @@ def extract_message_from_function_call(messages: List[LettaMessage]) -> Optional
     return None
 
 
-def extract_file_path_from_function_return(function_returns: List[LettaMessage]) -> Tuple[bool, Optional[str]]:
+def extract_file_path_from_function_return(function_returns: list[LettaMessage]) -> tuple[bool, str | None]:
     """
     Extracts and validates a file path from a list of LettaMessage objects.
 
@@ -51,10 +50,10 @@ def extract_file_path_from_function_return(function_returns: List[LettaMessage])
     file path.
 
     Args:
-        function_returns (List[LettaMessage]): A list of function return messages.
+        function_returns (list[LettaMessage]): A list of function return messages.
 
     Returns:
-        Tuple[bool, Optional[str]]: A tuple containing a boolean and a string.
+        tuple[bool, str | None]: A tuple containing a boolean and a string.
             - The boolean is True if a valid file path was found; False otherwise.
             - The string is the valid file path if found; None otherwise.
     """

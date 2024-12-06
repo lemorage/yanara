@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Any, Dict, Optional
+from typing import Any
 
 import httpx
 from rich import print
@@ -12,18 +12,18 @@ install(show_locals=True)
 
 async def request(
     url: str,
-    data: Optional[Dict[str, Any]] = None,
-    options: Optional[Dict[str, Any]] = None,
-    axios_options: Optional[Dict[str, Any]] = None,
+    data: dict[str, Any] | None = None,
+    options: dict[str, Any] | None = None,
+    axios_options: dict[str, Any] | None = None,
 ) -> Any:
     """Send an asynchronous HTTP request to a specified URL with optional custom parameters.
 
     Parameters
     ----------
     - url (str): The URL to send the request to.
-    - data (Optional[Dict[str, Any]]): The data to send in the request body (for POST/PUT).
-    - options (Optional[Dict[str, Any]]): A dictionary containing request options, including 'method' (GET, POST, PUT).
-    - axios_options (Optional[Dict[str, Any]]): Additional axios-like options for the request (e.g., timeout, proxy).
+    - data (dict[str, Any] | None): The data to send in the request body (for POST/PUT).
+    - options (dict[str, Any] | None): A dictionary containing request options, including 'method' (GET, POST, PUT).
+    - axios_options (dict[str, Any] | None): Additional axios-like options for the request (e.g., timeout, proxy).
 
     Returns
     -------
@@ -54,7 +54,7 @@ async def request(
     return await method_mapping[method](url, merged_axios_options, data)
 
 
-async def _http_call(url: str, axios_options: Dict[str, Any], data: Optional[Dict[str, Any]], http_method: str) -> Any:
+async def _http_call(url: str, axios_options: dict[str, Any], data: dict[str, Any] | None, http_method: str) -> Any:
     """Make a generalized HTTP call."""
     try:
         client_options = {
