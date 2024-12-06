@@ -6,7 +6,7 @@ import lark_oapi as lark
 from lark_oapi.api.bitable.v1 import *
 
 from yanara.util.config import get_lark_app_id_and_secret
-from yanara.util.date import adjust_timestamp, datetime_to_timestamp, timestamp_to_datetime
+from yanara.util.date import adjust_timestamp, datetime_to_timestamp, is_timestamp, timestamp_to_datetime
 
 
 class LarkTableService:
@@ -195,8 +195,6 @@ class LarkTableService:
             dict: Processed data with timestamps adjusted for timezone differences between Japan and China.
         """
         data_dict = json.loads(lark.JSON.marshal(data, indent=4))
-
-        is_timestamp = lambda val: isinstance(val, (int, float)) and 10**9 < val < 10**13
 
         data_dict["items"] = [
             {

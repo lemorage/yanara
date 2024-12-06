@@ -1,4 +1,10 @@
 from datetime import datetime, timedelta
+from typing import Any
+
+
+def is_timestamp(value: Any) -> bool:
+    """Determines if a value is a timestamp."""
+    return isinstance(value, (int, float)) and 10**9 < value < 10**13
 
 
 def timestamp_to_datetime(timestamp_ms: int) -> str:
