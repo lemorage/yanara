@@ -53,14 +53,13 @@ def test_build_request_body(lark_service):
     assert request_body.field_names == field_names
 
 
-def test_process_response_data():
-    """Test _process_response_data static method."""
+def test_sync_timezone_offsets():
+    """Test _sync_timezone_offsets static method."""
     # Arrange
     raw_data = {"items": [{"fields": {"date_field": 1704067200}}]}  # Mocked UNIX timestamp
-    filter_field_name = "date_field"
 
     # Act
-    result = LarkTableService._process_response_data(raw_data, filter_field_name)
+    result = LarkTableService._sync_timezone_offsets(raw_data)
 
     # Assert
     assert "items" in result

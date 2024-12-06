@@ -60,7 +60,7 @@ class LarkTableService:
             return {}
 
         data_dict = json.loads(lark.JSON.marshal(response.data, indent=4))
-        return self._process_response_data(response.data, filter_field_name)
+        return self._sync_timezone_offsets(response.data)
 
     def fetch_records_with_exact_value(
         self,
@@ -92,7 +92,7 @@ class LarkTableService:
             return {}
 
         data_dict = json.loads(lark.JSON.marshal(response.data, indent=4))
-        return self._process_response_data(response.data, filter_field_name)
+        return self._sync_timezone_offsets(response.data)
 
     @staticmethod
     def _build_date_filter_conditions(
@@ -181,16 +181,18 @@ class LarkTableService:
         return self.client.bitable.v1.app_table_record.search(request)
 
     @staticmethod
-    def _process_response_data(data: str, filter_field_name: str) -> dict:
+    def _sync_timezone_offsets(data: str) -> dict[str, Any]:
         """
-        Processes API response data and adjusts timestamp fields, including special cases.
+        Processes API response data and adjusts timestamps for timezone differences between Japan and China.
+
+        This function parses JSON response data and iterates through all entries in the `items` list.
+        The timestamp is adjusted because the Lark API returns timestamps in the Japan timezone.
 
         Args:
             data (str): The raw JSON response data.
-            filter_field_name (str): The field name whose timestamps will be adjusted.
 
         Returns:
-            dict: Processed data with adjusted timestamps.
+            dict: Processed data with timestamps adjusted for timezone differences between Japan and China.
         """
         data_dict = json.loads(lark.JSON.marshal(data, indent=4))
 
@@ -200,25 +202,18 @@ class LarkTableService:
             {
                 **item,
                 "fields": {
-                    **{
-                        # Transform standard fields if they match filter_field_name
-                        key: (
-                            adjust_timestamp(value, hours=1)
-                            if key == filter_field_name and isinstance(value, (int, float))
-                            else value
+                    field_name: (
+                        # Handle dict-form fields
+                        adjust_timestamp(field_value.get("value")[0], hours=1)
+                        if isinstance(field_value, dict) and field_value.get("type") == 5
+                        # Handle non-dict-form fields
+                        else (
+                            adjust_timestamp(field_value, hours=1)
+                            if is_timestamp(field_value)
+                            else field_value  # Leave other fields unchanged
                         )
-                        for key, value in item["fields"].items()
-                    },
-                    **{
-                        # Special case: Handle fields in the form "field_name: field_value"
-                        key: (
-                            adjust_timestamp(value, hours=1)
-                            if isinstance(value, (int, float)) and is_timestamp(value)
-                            else value
-                        )
-                        for key, value in item["fields"].items()
-                        if not isinstance(value, dict)  # Identify fields in the "field_name: field_value" form
-                    },
+                    )
+                    for field_name, field_value in item["fields"].items()
                 },
             }
             for item in data_dict["items"]
