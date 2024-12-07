@@ -41,16 +41,17 @@ def get_monthly_revenue_statistics(self: "Agent", start_date: str, end_date: str
         ]
     """
     from yanara.api.lark_api.lark_service import LarkTableService
+    from yanara.api.lark_api.lark_table_model import LarkTableModel
     from yanara.tools._internal.helpers import process_lark_data, standardize_stat_data
     from yanara.util.date import adjust_timestamp, format_date_range, timestamp_to_datetime
 
     formatted_start_date, formatted_end_date = format_date_range(start_date, end_date)
 
     lark_service = LarkTableService("DJJ2bdtuPalDEBsJbijcwnV6n1g")
+    table = LarkTableModel(table_id="tblL7opM5nJK2wTL", view_id="vewzpcbKip", primary_key="年月")
 
     raw_data = lark_service.fetch_records_within_date_range(
-        table_id="tblL7opM5nJK2wTL",
-        view_id="vewzpcbKip",
+        table,
         field_names=[
             "売上",
             "入住率",

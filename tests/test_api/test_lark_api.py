@@ -95,8 +95,7 @@ def test_fetch_records_within_date_range(mock_send_request, mock_client, mock_ge
     mock_send_request.return_value = mock_response
 
     # Arrange
-    table_id = "test_table"
-    view_id = "test_view"
+    table = LarkTableModel(table_id="test_table", view_id="test_view", primary_key="id")
     field_names = ["field1", "field2"]
     filter_field_name = "date_field"
     start_date = datetime.datetime(2024, 12, 1)
@@ -107,7 +106,7 @@ def test_fetch_records_within_date_range(mock_send_request, mock_client, mock_ge
 
     # Act
     result = lark_service.fetch_records_within_date_range(
-        table_id, view_id, field_names, filter_field_name, start_date_str, end_date_str
+        table, field_names, filter_field_name, start_date_str, end_date_str
     )
 
     # Assert

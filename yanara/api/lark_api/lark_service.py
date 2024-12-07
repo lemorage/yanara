@@ -5,6 +5,7 @@ from typing import Any
 import lark_oapi as lark
 from lark_oapi.api.bitable.v1 import *
 
+from yanara.api.lark_api.lark_table_model import LarkTableModel
 from yanara.util.config import get_lark_app_id_and_secret
 from yanara.util.date import adjust_timestamp, datetime_to_timestamp, is_timestamp, timestamp_to_datetime
 
@@ -15,23 +16,28 @@ class LarkTableService:
 
     Attributes:
         client (lark.Client): The Lark API client for sending requests.
+        table_model (LarkTableModel): The table model used to handle record processing.
     """
 
-    def __init__(self, app_token: str) -> None:
+    def __init__(self, app_token: str, table_model: LarkTableModel = None) -> None:
         """
-        Initializes the LarkTableService with the app token and API client.
+        Initializes the LarkTableService with the app token, API client, and optionally a table model.
 
         Args:
             app_token (str): The application token for the Lark table.
+            table_model (LarkTableModel, optional): The table model to handle field processing and timestamp adjustments.
+                                                   If not provided, a default table model will be created.
         """
         app_id, app_secret = get_lark_app_id_and_secret()
         self.app_token = app_token
         self.client = lark.Client.builder().app_id(app_id).app_secret(app_secret).log_level(lark.LogLevel.DEBUG).build()
 
+        # If no table model is provided, create a default one [Note: only for test purposes]
+        self.table_model = table_model or LarkTableModel(table_id="", view_id="", primary_key="")
+
     def fetch_records_within_date_range(
         self,
-        table_id: str,
-        view_id: str,
+        table: LarkTableModel,
         field_names: list[str],
         filter_field_name: str,
         start_date: datetime.datetime,
@@ -41,31 +47,29 @@ class LarkTableService:
         Fetches records filtered by a date range from a Lark table.
 
         Args:
-            table_id (str): The ID of the table to fetch data from.
-            view_id (str): The view ID for the table.
+            table (LarkTableModel): The LarkTableModel instance representing the table from which records are to be fetched.
             field_names (list[str]): The names of fields to include in the results.
             filter_field_name (str): The field name to filter records by.
-            start_date (datetime.datetime): The start date for filtering.
-            end_date (datetime.datetime): The end date for filtering.
+            start_date (datetime.datetime): The start date for filtering records.
+            end_date (datetime.datetime): The end date for filtering records.
 
         Returns:
-            dict: A dictionary containing the filtered records with adjusted date fields.
+            dict: A dictionary containing the filtered records with adjusted date fields, or an empty dictionary if the fetch fails.
         """
         filter_conditions = self._build_date_filter_conditions(filter_field_name, start_date, end_date)
-        request_body = self._build_request_body(view_id, field_names, filter_conditions)
-        response = self._send_request(table_id, request_body)
+        request_body = self._build_request_body(table.view_id, field_names, filter_conditions)
+        response = self._send_request(table.table_id, request_body)
 
         if not response.success():
             lark.logger.error(f"Failed to fetch records: {response.code}, {response.msg}")
             return {}
 
         data_dict = json.loads(lark.JSON.marshal(response.data, indent=4))
-        return self._sync_timezone_offsets(response.data)
+        return self._sync_timezone_offsets(data_dict)
 
     def fetch_records_with_exact_value(
         self,
-        table_id: str,
-        view_id: str,
+        table: LarkTableModel,
         field_names: list[str],
         filter_field_name: str,
         filter_value: str,
@@ -74,25 +78,24 @@ class LarkTableService:
         Fetches records filtered by an exact value for a specific field in a Lark table.
 
         Args:
-            table_id (str): The ID of the table to fetch data from.
-            view_id (str): The view ID for the table.
+            table (LarkTableModel): The LarkTableModel instance representing the table from which records are to be fetched.
             field_names (list[str]): The names of fields to include in the results.
             filter_field_name (str): The field name to filter records by.
-            filter_value (str): The value to filter records by (exact match).
+            filter_value (str): The exact value to filter records by.
 
         Returns:
-            dict: A dictionary containing the filtered records.
+            dict: A dictionary containing the filtered records, or an empty dictionary if the fetch fails.
         """
         filter_conditions = self._build_exact_value_filter_conditions(filter_field_name, filter_value)
-        request_body = self._build_request_body(view_id, field_names, filter_conditions)
-        response = self._send_request(table_id, request_body)
+        request_body = self._build_request_body(table.view_id, field_names, filter_conditions)
+        response = self._send_request(table.table_id, request_body)
 
         if not response.success():
             lark.logger.error(f"Failed to fetch records: {response.code}, {response.msg}")
             return {}
 
         data_dict = json.loads(lark.JSON.marshal(response.data, indent=4))
-        return self._sync_timezone_offsets(response.data)
+        return self._sync_timezone_offsets(data_dict)
 
     @staticmethod
     def _build_date_filter_conditions(
