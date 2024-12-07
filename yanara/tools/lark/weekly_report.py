@@ -40,11 +40,10 @@ def get_weekly_report_statistics(self: "Agent", which_week: int) -> list[dict]:
     from yanara.tools._internal.helpers import process_lark_data, standardize_stat_data
     from yanara.util.date import adjust_timestamp, timestamp_to_datetime
 
-    lark_service = LarkTableService("KFo5bqi26a52u2s5toJcrV6tnWb")
     table = LarkTableModel(table_id="tblulMPBjoYKFpDg", view_id="vew8UWgWyj", primary_key="周一日期")
+    lark_service = LarkTableService(app_token="KFo5bqi26a52u2s5toJcrV6tnWb", table_model=table)
 
     raw_data = lark_service.fetch_records_with_exact_value(
-        table,
         field_names=[
             "第几周",
             "周一日期",

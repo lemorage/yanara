@@ -30,11 +30,10 @@ def lookup_room_availability_by_date(self: "Agent", check_in: str, check_out: st
 
     formatted_check_in, formatted_check_out = format_date_range(check_in, check_out)
 
-    lark_service = LarkTableService("KFo5bqi26a52u2s5toJcrV6tnWb")
     table = LarkTableModel(table_id="tblxlwPlmWXLOHl7", view_id="vew9aCSfMp", primary_key="日期")
+    lark_service = LarkTableService(app_token="KFo5bqi26a52u2s5toJcrV6tnWb", table_model=table)
 
     raw_data = lark_service.fetch_records_within_date_range(
-        table,
         field_names=[
             "日期",
             "空室数",

@@ -37,7 +37,6 @@ class LarkTableService:
 
     def fetch_records_within_date_range(
         self,
-        table: LarkTableModel,
         field_names: list[str],
         filter_field_name: str,
         start_date: datetime.datetime,
@@ -57,8 +56,8 @@ class LarkTableService:
             dict: A dictionary containing the filtered records with adjusted date fields, or an empty dictionary if the fetch fails.
         """
         filter_conditions = self._build_date_filter_conditions(filter_field_name, start_date, end_date)
-        request_body = self._build_request_body(table.view_id, field_names, filter_conditions)
-        response = self._send_request(table.table_id, request_body)
+        request_body = self._build_request_body(self.table_model.view_id, field_names, filter_conditions)
+        response = self._send_request(self.table_model.table_id, request_body)
 
         if not response.success():
             lark.logger.error(f"Failed to fetch records: {response.code}, {response.msg}")
@@ -69,7 +68,6 @@ class LarkTableService:
 
     def fetch_records_with_exact_value(
         self,
-        table: LarkTableModel,
         field_names: list[str],
         filter_field_name: str,
         filter_value: str,
@@ -87,8 +85,8 @@ class LarkTableService:
             dict: A dictionary containing the filtered records, or an empty dictionary if the fetch fails.
         """
         filter_conditions = self._build_exact_value_filter_conditions(filter_field_name, filter_value)
-        request_body = self._build_request_body(table.view_id, field_names, filter_conditions)
-        response = self._send_request(table.table_id, request_body)
+        request_body = self._build_request_body(self.table_model.view_id, field_names, filter_conditions)
+        response = self._send_request(self.table_model.table_id, request_body)
 
         if not response.success():
             lark.logger.error(f"Failed to fetch records: {response.code}, {response.msg}")

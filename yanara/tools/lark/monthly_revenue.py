@@ -47,11 +47,10 @@ def get_monthly_revenue_statistics(self: "Agent", start_date: str, end_date: str
 
     formatted_start_date, formatted_end_date = format_date_range(start_date, end_date)
 
-    lark_service = LarkTableService("DJJ2bdtuPalDEBsJbijcwnV6n1g")
     table = LarkTableModel(table_id="tblL7opM5nJK2wTL", view_id="vewzpcbKip", primary_key="年月")
+    lark_service = LarkTableService(app_token="DJJ2bdtuPalDEBsJbijcwnV6n1g", table_model=table)
 
     raw_data = lark_service.fetch_records_within_date_range(
-        table,
         field_names=[
             "売上",
             "入住率",
