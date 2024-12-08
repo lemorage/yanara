@@ -181,8 +181,7 @@ class LarkTableService:
         )
         return self.client.bitable.v1.app_table_record.search(request)
 
-    @staticmethod
-    def _sync_timezone_offsets(data: str) -> dict[str, Any]:
+    def _sync_timezone_offsets(self, data: str) -> dict[str, Any]:
         """
         Processes API response data and adjusts timestamps for timezone differences between Japan and China.
 
@@ -197,25 +196,6 @@ class LarkTableService:
         """
         data_dict = json.loads(lark.JSON.marshal(data, indent=4))
 
-        data_dict["items"] = [
-            {
-                **item,
-                "fields": {
-                    field_name: (
-                        # Handle dict-form fields
-                        adjust_timestamp(field_value.get("value")[0], hours=1)
-                        if isinstance(field_value, dict) and field_value.get("type") == 5
-                        # Handle non-dict-form fields
-                        else (
-                            adjust_timestamp(field_value, hours=1)
-                            if is_timestamp(field_value)
-                            else field_value  # Leave other fields unchanged
-                        )
-                    )
-                    for field_name, field_value in item["fields"].items()
-                },
-            }
-            for item in data_dict["items"]
-        ]
+        data_dict["items"] = [self.table_model.sync_time_offset_for_record(item) for item in data_dict.get("items", [])]
 
         return data_dict
