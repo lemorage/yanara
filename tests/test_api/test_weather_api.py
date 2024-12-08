@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 from geopy.exc import GeocoderTimedOut
+import httpx
 import pytest
 
 from yanara.api.weather_api.weather_service import WEATHER_CODE_MAPPING, WeatherService
@@ -60,6 +61,24 @@ def test_get_lat_lon_timeout(mock_nominatim):
     assert lon is None
 
 
+@patch("yanara.api.weather_api.weather_service.Nominatim")
+def test_get_lat_lon_geocode_exception(mock_nominatim):
+    # Arrange
+    mock_geolocator = mock_nominatim.return_value
+    mock_geolocator.geocode = MagicMock(side_effect=Exception("Unexpected error during geocoding"))
+    weather_service = WeatherService()
+
+    location = "Paris"
+
+    # Act
+    lat, lon = weather_service.get_lat_lon(location)
+
+    # Assert
+    mock_geolocator.geocode.assert_called_once_with(location, timeout=10)
+    assert lat is None
+    assert lon is None
+
+
 @patch("yanara.api.weather_api.weather_service.TimezoneFinder")
 def test_get_timezone_valid(mock_tzfinder):
     # Arrange
@@ -86,6 +105,20 @@ def test_get_timezone_invalid(mock_tzfinder):
     # Assert
     assert timezone == "UTC"
     mock_tzfinder.return_value.timezone_at.assert_called_once_with(lat=0.0, lng=0.0)
+
+
+@patch("yanara.api.weather_api.weather_service.TimezoneFinder")
+def test_get_timezone_exception(mock_tzfinder):
+    # Arrange
+    mock_tzfinder.return_value.timezone_at = MagicMock(side_effect=Exception("Timezone lookup failed"))
+    weather_service = WeatherService()
+
+    # Act
+    timezone = weather_service.get_timezone(35.6762, 139.6503)
+
+    # Assert
+    assert timezone == "UTC"
+    mock_tzfinder.return_value.timezone_at.assert_called_once_with(lat=35.6762, lng=139.6503)
 
 
 @patch("yanara.api.weather_api.weather_service.httpx.Client")
@@ -132,6 +165,38 @@ def test_fetch_weather_http_error(mock_httpx_client):
 
     # Assert
     assert result == {"error": "Unexpected error: HTTP error"}
+    mock_client_instance.get.assert_called_once()
+
+
+@patch("yanara.api.weather_api.weather_service.httpx.Client")
+def test_fetch_weather_request_error(mock_httpx_client):
+    # Arrange
+    mock_client_instance = mock_httpx_client.return_value
+    mock_client_instance.get.side_effect = httpx.RequestError("Request error")
+    weather_service = WeatherService()
+
+    # Act
+    result = weather_service._fetch_weather(48.8566, 2.3522)
+
+    # Assert
+    assert result == {"error": "Request error: Request error"}
+    mock_client_instance.get.assert_called_once()
+
+
+@patch("yanara.api.weather_api.weather_service.httpx.Client")
+def test_fetch_weather_http_status_error(mock_httpx_client):
+    # Arrange
+    mock_client_instance = mock_httpx_client.return_value
+    mock_client_instance.get.side_effect = httpx.HTTPStatusError(
+        "HTTP error", request=MagicMock(), response=MagicMock(status_code=500)
+    )
+    weather_service = WeatherService()
+
+    # Act
+    result = weather_service._fetch_weather(48.8566, 2.3522)
+
+    # Assert
+    assert result == {"error": "HTTP error: 500"}
     mock_client_instance.get.assert_called_once()
 
 
