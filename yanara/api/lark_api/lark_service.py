@@ -95,6 +95,60 @@ class LarkTableService:
         data_dict = json.loads(lark.JSON.marshal(response.data, indent=4))
         return self._sync_timezone_offsets(data_dict)
 
+    def create_records(self, fields: dict[str, Any]) -> dict[str, Any]:
+        """
+        Creates records in the Lark table.
+
+        Args:
+            fields (dict[str, Any]): A dictionary of fields and their values to be added to the table.
+
+        Returns:
+            dict[str, Any]: A dictionary containing the created record's data, or None if the creation fails.
+        """
+        request_body = self._build_post_request_body(fields)
+        response = self._send_post_request(self.table_model.table_id, request_body)
+
+        if not response.success():
+            lark.logger.error(f"Failed to create records: {response.code}, msg: {response.msg}")
+            return
+
+        data_dict = json.loads(lark.JSON.marshal(response.data, indent=4))
+        return data_dict
+
+    def _build_post_request_body(self, fields: dict[str, Any]) -> CreateAppTableRecordResponseBody:
+        """
+        Constructs the request body for creating a new record.
+
+        Args:
+            fields (dict[str, Any]): A dictionary of fields and their values to be included in the new record.
+
+        Returns:
+            CreateAppTableRecordResponseBody: The request body for creating a record.
+        """
+        return AppTableRecord.builder().fields(fields).build()
+
+    def _send_post_request(
+        self, table_id: str, request_body: CreateAppTableRecordResponseBody
+    ) -> CreateAppTableRecordResponse:
+        """
+        Sends a POST request to create a new record in the specified table.
+
+        Args:
+            table_id (str): The ID of the table where the record will be created.
+            request_body (CreateAppTableRecordResponseBody): The request body containing the record's details.
+
+        Returns:
+            CreateAppTableRecordResponse: The API response for the record creation request.
+        """
+        request = (
+            CreateAppTableRecordRequest.builder()
+            .app_token(self.app_token)
+            .table_id(table_id)
+            .request_body(request_body)
+            .build()
+        )
+        return self.client.bitable.v1.app_table_record.create(request)
+
     @staticmethod
     def _build_date_filter_conditions(
         field_name: str, start_date: datetime.datetime, end_date: datetime.datetime
