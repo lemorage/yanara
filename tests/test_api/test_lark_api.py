@@ -163,12 +163,12 @@ def test_build_date_filter_conditions(lark_service):
 def test_build_request_body(lark_service):
     """Test _build_request_body method."""
     # Arrange
-    view_id = "view_id"
+    view_id = "view456"
     field_names = ["field1", "field2"]
     filter_conditions = [MagicMock(), MagicMock()]
 
     # Act
-    request_body = lark_service._build_request_body(view_id, field_names, filter_conditions)
+    request_body = lark_service._build_request_body(field_names, filter_conditions)
 
     # Assert
     assert isinstance(request_body, SearchAppTableRecordRequestBody)
