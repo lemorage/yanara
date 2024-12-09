@@ -1,4 +1,5 @@
 import datetime
+from enum import Enum
 import json
 from typing import Any
 
@@ -10,18 +11,32 @@ from yanara.util.config import get_lark_app_id_and_secret
 from yanara.util.date import adjust_timestamp, datetime_to_timestamp, is_timestamp, timestamp_to_datetime
 
 
+class LarkRequestType(Enum):
+    """
+    Enum for specifying the type of Lark API request.
+    """
+
+    FETCH = "fetch"
+    CREATE = "create"
+
+
 class LarkTableService:
     """
-    Service for interacting with Lark Bitable tables to fetch records based on date ranges and filter conditions.
+    Service for interacting with Lark Bitable tables to fetch and create records.
+
+    This service provides methods to fetch records based on filters (e.g., date ranges or exact values)
+    and to create new records. It handles API requests and processes responses to synchronize
+    timestamps with the correct timezone.
 
     Attributes:
-        client (lark.Client): The Lark API client for sending requests.
-        table_model (LarkTableModel): The table model used to handle record processing.
+        app_token (str): The application token for accessing the Lark table.
+        client (lark.Client): The Lark API client used for sending requests.
+        table_model (LarkTableModel): The table model used to handle record processing and field adjustments.
     """
 
     def __init__(self, app_token: str, table_model: LarkTableModel = None) -> None:
         """
-        Initializes the LarkTableService with the app token, API client, and optionally a table model.
+        Initializes the LarkTableService with an app token, API client, and optionally a table model.
 
         Args:
             app_token (str): The application token for the Lark table.
@@ -32,7 +47,7 @@ class LarkTableService:
         self.app_token = app_token
         self.client = lark.Client.builder().app_id(app_id).app_secret(app_secret).log_level(lark.LogLevel.DEBUG).build()
 
-        # If no table model is provided, create a default one [Note: only for test purposes]
+        # Use a default table model if none is provided (for test purposes or general usage)
         self.table_model = table_model or LarkTableModel(table_id="", view_id="", primary_key="")
 
     def fetch_records_within_date_range(
@@ -43,7 +58,7 @@ class LarkTableService:
         end_date: datetime.datetime,
     ) -> dict[str, Any]:
         """
-        Fetches records filtered by a date range from a Lark table.
+        Fetches records filtered by a date range from the Lark table.
 
         Args:
             field_names (list[str]): The names of fields to include in the results.
@@ -52,11 +67,12 @@ class LarkTableService:
             end_date (datetime.datetime): The end date for filtering records.
 
         Returns:
-            dict: A dictionary containing the filtered records with adjusted date fields, or an empty dictionary if the fetch fails.
+            dict[str, Any]: A dictionary containing the filtered records with adjusted date fields,
+                            or an empty dictionary if the fetch fails.
         """
         filter_conditions = self._build_date_filter_conditions(filter_field_name, start_date, end_date)
-        request_body = self._build_request_body(field_names=field_names, filter_conditions=filter_conditions)
-        response = self._send_request(request_body, operation="fetch")
+        request_body = self._build_request_body(field_names, filter_conditions)
+        response = self._send_request(request_body, request_type=LarkRequestType.FETCH)
 
         if not response.success():
             lark.logger.error(f"Failed to fetch records: {response.code}, {response.msg}")
@@ -71,7 +87,7 @@ class LarkTableService:
         filter_value: str,
     ) -> dict[str, Any]:
         """
-        Fetches records filtered by an exact value for a specific field in a Lark table.
+        Fetches records filtered by an exact value for a specific field in the Lark table.
 
         Args:
             field_names (list[str]): The names of fields to include in the results.
@@ -79,11 +95,11 @@ class LarkTableService:
             filter_value (str): The exact value to filter records by.
 
         Returns:
-            dict: A dictionary containing the filtered records, or an empty dictionary if the fetch fails.
+            dict[str, Any]: A dictionary containing the filtered records, or an empty dictionary if the fetch fails.
         """
         filter_conditions = self._build_exact_value_filter_conditions(filter_field_name, filter_value)
-        request_body = self._build_request_body(field_names=field_names, filter_conditions=filter_conditions)
-        response = self._send_request(request_body, operation="fetch")
+        request_body = self._build_request_body(field_names, filter_conditions)
+        response = self._send_request(request_body, request_type=LarkRequestType.FETCH)
 
         if not response.success():
             lark.logger.error(f"Failed to fetch records: {response.code}, {response.msg}")
@@ -99,10 +115,10 @@ class LarkTableService:
             fields (dict[str, Any]): A dictionary of fields and their values to be added to the table.
 
         Returns:
-            dict[str, Any]: A dictionary containing the created record's data, or None if the creation fails.
+            dict[str, Any]: A dictionary containing the created record's data, or an empty dictionary if the creation fails.
         """
-        request_body = self._build_request_body(fields=fields)
-        response = self._send_request(request_body, operation="create")
+        request_body = AppTableRecord.builder().fields(fields).build()
+        response = self._send_request(request_body, request_type=LarkRequestType.CREATE)
 
         if not response.success():
             lark.logger.error(f"Failed to create record: {response.code}, {response.msg}")
@@ -153,85 +169,82 @@ class LarkTableService:
         return [Condition.builder().field_name(field_name).operator("is").value([val]).build()]
 
     def _build_request_body(
-        self,
-        field_names: list[str] = None,
-        filter_conditions: list[Condition] = None,
-        fields: dict[str, Any] = None,
-    ) -> CreateAppTableRecordResponseBody | SearchAppTableRecordRequestBody:
+        self, field_names: list[str], filter_conditions: list[Condition]
+    ) -> SearchAppTableRecordRequestBody:
         """
-        Generalized method to build request bodies for fetching or creating records.
+        Constructs the request body for fetching records.
 
         Args:
-            field_names (list[str], optional): Fields to include in the fetch response.
-            filter_conditions (list[Condition], optional): Filter conditions for fetching records.
-            fields (dict[str, Any], optional): Fields and their values for creating a record.
+            field_names (list[str]): Fields to include in the response.
+            filter_conditions (list[Condition]): Filter conditions for the request.
 
         Returns:
-            Any: The constructed request body (specific type depends on the operation).
+            SearchAppTableRecordRequestBody: The request body.
         """
-        if fields:
-            return AppTableRecord.builder().fields(fields).build()
+        return (
+            SearchAppTableRecordRequestBody.builder()
+            .view_id(self.table_model.view_id)
+            .field_names(field_names)
+            .filter(FilterInfo.builder().conjunction("and").conditions(filter_conditions).build())
+            .automatic_fields(False)
+            .build()
+        )
 
-        if self.table_model.view_id and field_names and filter_conditions is not None:
-            return (
-                SearchAppTableRecordRequestBody.builder()
-                .view_id(self.table_model.view_id)
-                .field_names(field_names)
-                .filter(FilterInfo.builder().conjunction("and").conditions(filter_conditions).build())
-                .automatic_fields(False)
-                .build()
-            )
-
-        raise ValueError("Invalid parameters for building the request body.")
-
-    def _send_request(self, request_body: Any, operation: str) -> BaseResponse:
+    def _send_request(
+        self,
+        request_body: SearchAppTableRecordRequestBody | CreateAppTableRecordResponseBody,
+        request_type: LarkRequestType,
+    ) -> BaseResponse:
         """
-        Generalized method to send requests to the API.
+        Sends requests to the API for different operations.
 
         Args:
-            request_body (Any): The request body generated by `_build_request_body`.
-            operation (str): The operation type ("fetch" or "create").
+            request_body (SearchAppTableRecordRequestBody | CreateAppTableRecordResponseBody): The request body.
+            request_type (LarkRequestType): The type of request ("fetch" or "create").
 
         Returns:
             BaseResponse: The API response.
+
+        Raises:
+            ValueError: If the request type is unsupported.
         """
-        if operation == "fetch":
-            request = (
-                SearchAppTableRecordRequest.builder()
-                .app_token(self.app_token)
-                .table_id(self.table_model.table_id)
-                .request_body(request_body)
-                .build()
-            )
-            return self.client.bitable.v1.app_table_record.search(request)
+        match request_type:
+            case LarkRequestType.FETCH:
+                request = (
+                    SearchAppTableRecordRequest.builder()
+                    .app_token(self.app_token)
+                    .table_id(self.table_model.table_id)
+                    .request_body(request_body)
+                    .build()
+                )
+                return self.client.bitable.v1.app_table_record.search(request)
 
-        elif operation == "create":
-            request = (
-                CreateAppTableRecordRequest.builder()
-                .app_token(self.app_token)
-                .table_id(self.table_model.table_id)
-                .request_body(request_body)
-                .build()
-            )
-            return self.client.bitable.v1.app_table_record.create(request)
+            case LarkRequestType.CREATE:
+                request = (
+                    CreateAppTableRecordRequest.builder()
+                    .app_token(self.app_token)
+                    .table_id(self.table_model.table_id)
+                    .request_body(request_body)
+                    .build()
+                )
+                return self.client.bitable.v1.app_table_record.create(request)
 
-        raise ValueError("Unsupported operation type.")
+            case _:
+                raise ValueError(f"Unsupported request type: {request_type}")
 
     def _sync_timezone_offsets(self, data: str) -> dict[str, Any]:
         """
-        Processes API response data and adjusts timestamps for timezone differences between Japan and China.
+        Processes API response data and adjusts timestamps for timezone differences.
 
         This function parses JSON response data and iterates through all entries in the `items` list.
-        The timestamp is adjusted because the Lark API returns timestamps in the Japan timezone.
+        The timestamp is adjusted for the difference between Japan and China timezones.
 
         Args:
             data (str): The raw JSON response data.
 
         Returns:
-            dict: Processed data with timestamps adjusted for timezone differences between Japan and China.
+            dict[str, Any]: Processed data with timestamps adjusted for timezone differences.
         """
         data_dict = json.loads(lark.JSON.marshal(data, indent=4))
-
         data_dict["items"] = [self.table_model.sync_time_offset_for_record(item) for item in data_dict.get("items", [])]
-
         return data_dict
