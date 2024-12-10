@@ -50,6 +50,24 @@ class LarkTableService:
         # Use a default table model if none is provided (for test purposes or general usage)
         self.table_model = table_model or LarkTableModel(table_id="", view_id="", primary_key="")
 
+    def fetch_app_tables(self) -> dict[str, Any]:
+        """
+        Fetches the app tables using the instance's app_token and client.
+
+        This method uses the self.app_token and self.client attributes to fetch app tables.
+
+        Returns:
+            dict[str, Any]: A dictionary containing the app tables, or an empty dictionary if the request fails.
+        """
+        request = ListAppTableRequest.builder().app_token(self.app_token).build()
+        response = self.client.bitable.v1.app_table.list(request)
+
+        if not response.success():
+            lark.logger.error(f"Failed to list app tables: {response.code}, {response.msg}")
+            return {}
+
+        return json.loads(lark.JSON.marshal(response.data, indent=4))
+
     def fetch_records_within_date_range(
         self,
         field_names: list[str],
