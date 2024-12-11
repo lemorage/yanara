@@ -18,3 +18,7 @@
 .venv
 .env
 /poetry.toml
+
+# Letta-specific files
+openapi_letta.json
+openapi_openai.json
