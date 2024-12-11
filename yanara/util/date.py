@@ -21,10 +21,14 @@ def timestamp_to_datetime(timestamp_ms: int) -> str:
 def datetime_to_timestamp(date_string: str) -> int:
     """Convert a human-readable datetime string to a Unix timestamp in milliseconds.
 
-    :param date_string: Date string in the format 'YYYY-MM-DD HH:MM:SS'
+    :param date_string: Date string in the format 'YYYY-MM-DD' or 'YYYY-MM-DD HH:MM:SS'
     :return: Unix timestamp in milliseconds
     """
-    dt = datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+    try:
+        dt = datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        dt = datetime.strptime(date_string, "%Y-%m-%d")
+
     timestamp_s = int(dt.timestamp())
     return timestamp_s * 1000  # Convert to milliseconds
 

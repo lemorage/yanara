@@ -43,7 +43,7 @@ def create_a_staging_order_for_booking_a_room(
                     "check_in_date": 1711900800000,
                     "check_out_date": 1711987200000,
                     "num_of_guests": 1,
-                    "room_type": ["301（3人间）", "202（大床）"],
+                    "room_number": ["301（3人间）", "202（大床）"],
                     "user_contact": "hero@usa.com",
                     "user_id": "luigi",
                     "user_name": "Luigi Mangione"
@@ -54,22 +54,43 @@ def create_a_staging_order_for_booking_a_room(
     """
     from yanara.api.lark_api.lark_service import LarkTableService
     from yanara.api.lark_api.lark_table_model import LarkTableModel
-    from yanara.tools._internal.helpers import process_lark_data, standardize_stat_data
+    from yanara.tools._internal.helpers import standardize_stat_data
     from yanara.util.date import datetime_to_timestamp
 
     table = LarkTableModel(table_id="tblWyF55DDspX0D3", view_id="vewzTTaQcw", primary_key="user_id")
     lark_service = LarkTableService(app_token="RPMLbE4UXa26N9s8867cHlebnrb", table_model=table)
 
+    fields = {
+        "user_id": user_id,
+        "user_name": user_name,
+        "user_contact": user_contact,
+        "check_in_date": datetime_to_timestamp(check_in_date),
+        "check_out_date": datetime_to_timestamp(check_out_date),
+        "num_of_guests": num_of_guests,
+        "room_number": room_number,
+    }
+
+    key_map = {
+        "room_number": (
+            "room_number",
+            lambda v: [
+                {
+                    301: "301（3人间）",
+                    101: "101（4人间）",
+                    201: "201（双人）",
+                    202: "202（大床）",
+                    401: "401（2室1厅）",
+                    302: "302（4人间）",
+                }.get(room, f"{room}（未知类型）")
+                for room in v
+            ],
+        ),
+    }
+
+    processed_fields = standardize_stat_data([fields])
+
     raw_data = lark_service.create_record(
-        fields={
-            "user_id": user_id,
-            "user_name": user_name,
-            "user_contact": user_contact,
-            "check_in_date": datetime_to_timestamp(check_in_date),
-            "check_out_date": datetime_to_timestamp(check_out_date),
-            "num_of_guests": num_of_guests,
-            "room_type": room_type,
-        },
+        fields=processed_fields[0],
     )
 
     return raw_data
