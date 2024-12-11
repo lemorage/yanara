@@ -125,9 +125,9 @@ class LarkTableService:
 
         return self._sync_timezone_offsets(response.data)
 
-    def create_records(self, fields: dict[str, Any]) -> dict[str, Any]:
+    def create_record(self, fields: dict[str, Any]) -> dict[str, Any]:
         """
-        Creates records in the Lark table.
+        Creates a record in the Lark table.
 
         Args:
             fields (dict[str, Any]): A dictionary of fields and their values to be added to the table.
