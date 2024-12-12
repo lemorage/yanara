@@ -44,3 +44,24 @@ def load_all_tools(client: LocalClient | RESTClient):
     for tool_function in tools:
         tool = client.create_tool(tool_function)
         print(f"Registered tool: {tool.name} ({tool.id})")
+
+
+def cleanup(client: LocalClient | RESTClient, agent_name: str = None, agent_uuid: str = None):
+    """
+    Deletes a specific agent from the system by its name or unique identifier (UUID).
+
+    This function iterates through all agents managed by the given `client`,
+    identifies the agent using either `agent_name` or `agent_uuid`, and deletes it.
+    If neither `agent_name` nor `agent_uuid` is provided, the function does nothing.
+
+    Args:
+        client (LocalClient | RESTClient): The client instance used to interact with the agents.
+        agent_name (str, optional): The name of the agent to be deleted. Defaults to None.
+        agent_uuid (str, optional): The unique identifier (UUID) of the agent to be deleted. Defaults to None.
+    """
+    if not agent_name and not agent_uuid:
+        return
+    for agent_state in client.list_agents():
+        if agent_state.name == agent_name or agent_state.id == agent_uuid:
+            client.delete_agent(agent_id=agent_state.id)
+            print(f"Deleted agent: {agent_state.name} with ID {str(agent_state.id)}")
