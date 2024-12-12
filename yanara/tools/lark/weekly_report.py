@@ -1,4 +1,4 @@
-def get_weekly_report_statistics(self: "Agent", which_week: int) -> list[dict]:
+def get_weekly_report_statistics(which_week: int) -> list[dict]:
     """Get the weekly report statistics for a specific week.
 
     Args:
@@ -88,7 +88,7 @@ def get_weekly_report_statistics(self: "Agent", which_week: int) -> list[dict]:
     return standardize_stat_data(processed_data, key_map)
 
 
-def weekly_report_typesetting_print(self: "Agent", weekly_report_data: list[dict]) -> str:
+def weekly_report_typesetting_print(weekly_report_data: list[dict]) -> str:
     """Print the weekly report typesetting.
 
     Args:

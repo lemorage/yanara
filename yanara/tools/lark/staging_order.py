@@ -1,5 +1,4 @@
 def create_a_staging_order_for_booking_a_room(
-    self: "Agent",
     user_id: str,
     user_name: str,
     user_contact: str,
@@ -7,7 +6,7 @@ def create_a_staging_order_for_booking_a_room(
     check_out_date: str,
     num_of_guests: int,
     room_number: list[int],
-) -> dict[str, dict[str, any]]:
+) -> dict[str, dict]:
     """
     Create a staging order record for booking a room in the system.
 
@@ -87,7 +86,7 @@ def create_a_staging_order_for_booking_a_room(
         ),
     }
 
-    processed_fields = standardize_stat_data([fields])
+    processed_fields = standardize_stat_data([fields], key_map)
 
     raw_data = lark_service.create_record(
         fields=processed_fields[0],

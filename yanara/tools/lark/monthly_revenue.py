@@ -1,4 +1,4 @@
-def get_monthly_revenue_statistics(self: "Agent", start_date: str, end_date: str) -> list[dict]:
+def get_monthly_revenue_statistics(start_date: str, end_date: str) -> list[dict]:
     """
     Retrieve detailed monthly revenue statistics for a given date range.
 

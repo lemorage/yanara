@@ -1,4 +1,4 @@
-def lookup_room_availability_by_date(self: "Agent", check_in: str, check_out: str) -> list[dict]:
+def lookup_room_availability_by_date(check_in: str, check_out: str) -> list[dict]:
     """Look up the stock of hotel rooms for a specific date range.
 
     Args:

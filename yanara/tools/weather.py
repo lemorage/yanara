@@ -1,4 +1,4 @@
-def get_weather_forecast_by_location(self: "Agent", location: str) -> dict[str, str | float]:
+def get_weather_forecast_by_location(location: str) -> dict[str, str | float]:
     """
     Get the current weather for a given location.
 

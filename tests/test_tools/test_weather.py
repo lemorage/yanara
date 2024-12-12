@@ -27,7 +27,7 @@ def test_get_weather_forecast_by_location(mock_weather_service):
     location = "Paris"
 
     # Act
-    result = get_weather_forecast_by_location(None, location)
+    result = get_weather_forecast_by_location(location)
 
     # Assert
     expected_result = {
@@ -62,7 +62,7 @@ def test_weather_code_mapping_unknown_code(mock_weather_service):
     location = "Paris"
 
     # Act
-    result = get_weather_forecast_by_location(None, location)
+    result = get_weather_forecast_by_location(location)
 
     # Assert
     expected_result = {
@@ -97,7 +97,7 @@ def test_get_weather_forecast_with_different_timezone(mock_weather_service):
     location = "London"
 
     # Act
-    result = get_weather_forecast_by_location(None, location)
+    result = get_weather_forecast_by_location(location)
 
     # Assert
     expected_result = {
@@ -125,4 +125,4 @@ def test_get_weather_forecast_with_invalid_location(mock_weather_service):
 
     # Act
     with pytest.raises(Exception, match="Location not found"):
-        get_weather_forecast_by_location(None, location)
+        get_weather_forecast_by_location(location)

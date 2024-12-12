@@ -161,7 +161,7 @@ def test_lookup_room_availability_by_date(mock_lark_service, mocked_lark_service
     mock_lark_service.return_value = mocked_lark_service_for_room_availability
 
     # Act
-    result = lookup_room_availability_by_date(None, check_in, check_out)
+    result = lookup_room_availability_by_date(check_in, check_out)
 
     # Assert
     assert result == expected_output, f"Expected {expected_output}, but got {result}"
@@ -200,7 +200,7 @@ def test_get_weekly_report_statistics(mock_lark_service, mocked_lark_service_for
     mock_lark_service.return_value = mocked_lark_service_for_weekly_report
 
     # Act
-    result = get_weekly_report_statistics(None, week_number)
+    result = get_weekly_report_statistics(week_number)
 
     # Assert
     assert result == expected_output, f"Expected {expected_output}, but got {result}"
@@ -246,7 +246,7 @@ def test_get_monthly_revenue_statistics(mock_lark_service, mocked_lark_service_f
     mock_lark_service.return_value = mocked_lark_service_for_monthly_revenue
 
     # Act
-    result = get_monthly_revenue_statistics(None, start, end)
+    result = get_monthly_revenue_statistics(start, end)
 
     # Assert
     assert result == expected_output, f"Expected {expected_output}, but got {result}"
