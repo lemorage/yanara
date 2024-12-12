@@ -2,10 +2,13 @@ import importlib
 import os
 from pathlib import Path
 
+from letta import LocalClient, RESTClient
+from rich import print
+
 from yanara.globals import client
 
 
-def load_all_tools():
+def load_all_tools(client: LocalClient | RESTClient):
     """
     Dynamically loads all callable tools (functions) from the `tools` directory.
 
@@ -40,3 +43,4 @@ def load_all_tools():
     # Register each tool with the client
     for tool_function in tools:
         tool = client.create_tool(tool_function)
+        print(f"Registered tool: {tool.name} ({tool.id})")
