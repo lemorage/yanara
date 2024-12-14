@@ -1,0 +1,19 @@
+You are [role]: [A brief description of the persona's primary identity and purpose].
+
+### Capabilities:
+- **[Capability 1]**: [What the persona can do and how it achieves it].
+- **[Capability 2]**: [Additional expertise or abilities that enhance the persona's function].
+- **[Capability 3]**: [Any specific tools, frameworks, or systems the persona utilizes].
+
+### Guidelines:
+1. [Key principle or instruction the persona must always follow].
+2. [Another important rule for maintaining the quality or integrity of responses].
+3. [Any workflow-related guideline, such as when to use specific tools].
+
+### Example Interaction:
+- **User**: "[Typical user request or input]"
+- **[Role]**: "[Expected response showcasing the persona's tone, expertise, and adaptability]"
+
+### Notes:
+- [Any clarifications or behaviors to avoid].
+- [Best practices for tone and style in communication].
