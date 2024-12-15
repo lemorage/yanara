@@ -1,0 +1,18 @@
+# Normalize line endings
+* text=auto
+
+# Mark binary files
+*.json text
+*.ini text
+*.txt text
+
+# Source Python files (with diff)
+*.py text diff=python
+
+# Ignore test artifacts and irrelevant files
+tests/* text
+*.lock export-ignore
+*.toml export-ignore
+__pycache__/* export-ignore
+*.pyc export-ignore
+*.pyo export-ignore
