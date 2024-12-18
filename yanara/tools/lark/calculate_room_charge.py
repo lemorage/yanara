@@ -43,17 +43,20 @@ def calculate_room_charge(
     table = LarkTableModel(table_id="tblxlwPlmWXLOHl7", view_id="vew6lrwU1W", primary_key="日期")
     lark_service = LarkTableService(app_token="KFo5bqi26a52u2s5toJcrV6tnWb", table_model=table)
 
+    room_price_columns = {
+        101: "家庭房101价格",
+        302: "隔断家庭房302价格",
+        401: "两室家庭房401价格",
+        301: "浴缸双床房301价格",
+        201: "淋浴双床房201价格",
+        202: "淋浴大床房202价格",
+    }
+
+    field_names = ["日期"] + [room_price_columns[room] for room in room_numbers]
+
     # get the data in [check_in, check_out)
     raw_data = lark_service.fetch_records_within_date_range(
-        field_names=[
-            "日期",
-            "家庭房101价格",
-            "隔断家庭房302价格",
-            "两室家庭房401价格",
-            "浴缸双床房301价格",
-            "淋浴双床房201价格",
-            "淋浴大床房202价格",
-        ],
+        field_names=field_names,
         filter_field_name="日期",
         start_date=adjust_datetime_str(check_in_date, days=-1),
         end_date=check_out_date,
@@ -82,21 +85,17 @@ def calculate_room_charge(
 
         dates = [entry["日期"].split(" ")[0] for entry in data]
 
-        for entry, date in zip(data, dates):
-            for key, value in entry.items():
+        for entry in data:
+            date = entry["日期"].split(" ")[0]
+            for key, price in entry.items():
                 if key != "日期":
                     room_number = int("".join(filter(str.isdigit, key.split("房")[1])))
+                    result[room_number][date] = price
+                    result[room_number]["total"] += price
+                    total_sum += price
 
-                    if room_number in selected_rooms:
-                        result[room_number][date] = value
-                        result[room_number]["total"] += value
-                        total_sum += value
-
-        result = {room_mapping.get(room_number, room_number): value for room_number, value in result.items()}
-
+        result = {room_mapping.get(room, room): value for room, value in result.items()}
         result["total_sum"] = total_sum
-        return dict(result)
+        return result
 
-    output = process_room_data(data, room_numbers)
-
-    return output
+    return process_room_data(data, room_numbers)
