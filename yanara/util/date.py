@@ -48,6 +48,27 @@ def adjust_timestamp(timestamp_ms: int, days: int = 0, hours: int = 0) -> int:
     return int(adjusted_timestamp_s * 1000)
 
 
+def adjust_datetime_str(date_string: str, days: int = 0) -> str:
+    """Adjust a datetime string by a specified number of days.
+
+    Args:
+        date_string (str): The datetime string to adjust.
+        days (int): The number of days to adjust (can be positive or negative).
+
+    Returns:
+        str: The adjusted datetime string in the same format as the input.
+
+    Raises:
+        ValueError: If the date string format is not recognized.
+    """
+    fmt = "%Y-%m-%d %H:%M:%S" if " " in date_string else "%Y-%m-%d"
+
+    try:
+        return (datetime.strptime(date_string, fmt) + timedelta(days=days)).strftime(fmt)
+    except ValueError:
+        raise ValueError(f"Unsupported date format: {date_string}")
+
+
 def format_date_range(start_date: str, end_date: str, date_format: str = "%Y-%m-%d") -> tuple:
     """Formats start and end date strings to include time ('00:00:00') if they're in the 'YYYY-MM-DD' format,
     and adjusts the range by subtracting 2 days from the start date (unless it's today) and adding 2 days to the end date.
