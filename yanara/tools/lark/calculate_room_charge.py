@@ -37,6 +37,7 @@ def calculate_room_charge(
 
     from yanara.api.lark_api.lark_service import LarkTableService
     from yanara.api.lark_api.lark_table_model import LarkTableModel
+    from yanara.configs.oyasumi_ice_hotel_mappings import ICE_HOTEL_ROOM_MAPPING
     from yanara.tools._internal.helpers import process_lark_data, standardize_stat_data
     from yanara.util.date import adjust_datetime_str, timestamp_to_datetime
 
@@ -66,15 +67,6 @@ def calculate_room_charge(
         "日期": ("日期", lambda v: timestamp_to_datetime(v)),
     }
 
-    room_mapping = {
-        301: "301（3人间）",
-        101: "101（4人间）",
-        201: "201（双人）",
-        202: "202（大床）",
-        401: "401（2室1厅）",
-        302: "302（4人间）",
-    }
-
     processed_data = process_lark_data(raw_data)
 
     data = standardize_stat_data(processed_data, key_map)
@@ -94,7 +86,7 @@ def calculate_room_charge(
                     result[room_number]["total"] += price
                     total_sum += price
 
-        result = {room_mapping.get(room, room): value for room, value in result.items()}
+        result = {ICE_HOTEL_ROOM_MAPPING[room]: value for room, value in result.items()}
         result["total_sum"] = total_sum
         return result
 

@@ -3,7 +3,7 @@ def finalize_order_for_room_booking(
     check_in_date: str,
     check_out_date: str,
     num_of_guests: int,
-    room_number: list[int],
+    room_numbers: list[int],
     order_id: str,
     payment_amount: float,
 ) -> dict[str, dict]:
@@ -18,7 +18,7 @@ def finalize_order_for_room_booking(
         check_in_date (str): The check-in date in 'YYYY-MM-DD HH:MM:SS' format. If no time is provided, it defaults to '16:00:00'.
         check_out_date (str): The check-out date in 'YYYY-MM-DD HH:MM:SS' format. If no time is provided, it defaults to '11:00:00'.
         num_of_guests (int): The number of guests staying in the booking.
-        room_number (list[int]): A list of room numbers being booked. Each number corresponds to a unique room.
+        room_numbers (list[int]): A list of room numbers being booked. Each number corresponds to a unique room.
         order_id (str): The platform-specific order ID. Determines the booking channel (e.g., Booking.com, Airbnb).
         payment_amount (float): The total payment amount for the booking.
 
@@ -31,7 +31,7 @@ def finalize_order_for_room_booking(
         ...     check_in_date="2024-12-25",
         ...     check_out_date="2024-12-27",
         ...     num_of_guests=2,
-        ...     room_number=[201],
+        ...     room_numbers=[201],
         ...     order_id="423456789",
         ...     payment_amount=25000.2,
         ... )
@@ -55,6 +55,7 @@ def finalize_order_for_room_booking(
     """
     from yanara.api.lark_api.lark_service import LarkTableService
     from yanara.api.lark_api.lark_table_model import LarkTableModel
+    from yanara.configs.oyasumi_ice_hotel_mappings import ICE_HOTEL_ROOM_MAPPING
     from yanara.tools._internal.helpers import standardize_stat_data
     from yanara.util.date import datetime_to_timestamp
 
@@ -72,7 +73,7 @@ def finalize_order_for_room_booking(
         "CI": datetime_to_timestamp(check_in_date),
         "CO": datetime_to_timestamp(check_out_date),
         "总人数": num_of_guests,
-        "房间号": room_number,
+        "房间号": room_numbers,
         "平台订单号": order_id,
         "订单金额": payment_amount,
         "Channel": [channel],
@@ -82,17 +83,7 @@ def finalize_order_for_room_booking(
     key_map = {
         "房间号": (
             "房间号",
-            lambda v: [
-                {
-                    301: "301（3人间）",
-                    101: "101（4人间）",
-                    201: "201（双人）",
-                    202: "202（大床）",
-                    401: "401（2室1厅）",
-                    302: "302（4人间）",
-                }.get(room, f"{room}（未知类型）")
-                for room in v
-            ],
+            lambda v: [ICE_HOTEL_ROOM_MAPPING.get(room, f"{room}（未知类型）") for room in v],
         ),
     }
 

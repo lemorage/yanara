@@ -5,7 +5,7 @@ def create_a_staging_order_for_booking_a_room(
     check_in_date: str,
     check_out_date: str,
     num_of_guests: int,
-    room_number: list[int],
+    room_numbers: list[int],
 ) -> dict[str, dict]:
     """
     Create a staging order record for booking a room in the system.
@@ -23,7 +23,7 @@ def create_a_staging_order_for_booking_a_room(
         check_out_date (str): The check-out date in the format 'YYYY-MM-DD' or 'YYYY-MM-DD HH:MM:SS'.
                               If the time is not provided, it defaults to '00:00:00'.
         num_of_guests (int): The number of guests staying in the room.
-        room_number (list[int]): A list of room numbers being booked. Each number represents a unique room.
+        room_numbers (list[int]): A list of room numbers being booked. Each number represents a unique room.
 
     Example:
         >>> create_a_staging_order_for_booking_a_room(
@@ -34,7 +34,7 @@ def create_a_staging_order_for_booking_a_room(
         ...     check_in_date="2024-04-01",
         ...     check_out_date="2024-04-02",
         ...     num_of_guests=1,
-        ...     room_number=[301, 202]
+        ...     room_numbers=[301, 202]
         ... )
         {
             "record": {
@@ -42,7 +42,7 @@ def create_a_staging_order_for_booking_a_room(
                     "check_in_date": 1711900800000,
                     "check_out_date": 1711987200000,
                     "num_of_guests": 1,
-                    "room_number": ["301（3人间）", "202（大床）"],
+                    "room_numbers": ["301（3人间）", "202（大床）"],
                     "user_contact": "hero@usa.com",
                     "user_id": "luigi",
                     "user_name": "Luigi Mangione"
@@ -53,6 +53,7 @@ def create_a_staging_order_for_booking_a_room(
     """
     from yanara.api.lark_api.lark_service import LarkTableService
     from yanara.api.lark_api.lark_table_model import LarkTableModel
+    from yanara.configs.oyasumi_ice_hotel_mappings import ICE_HOTEL_ROOM_MAPPING
     from yanara.tools._internal.helpers import standardize_stat_data
     from yanara.util.date import datetime_to_timestamp
 
@@ -66,23 +67,13 @@ def create_a_staging_order_for_booking_a_room(
         "check_in_date": datetime_to_timestamp(check_in_date),
         "check_out_date": datetime_to_timestamp(check_out_date),
         "num_of_guests": num_of_guests,
-        "room_number": room_number,
+        "room_numbers": room_numbers,
     }
 
     key_map = {
-        "room_number": (
-            "room_number",
-            lambda v: [
-                {
-                    301: "301（3人间）",
-                    101: "101（4人间）",
-                    201: "201（双人）",
-                    202: "202（大床）",
-                    401: "401（2室1厅）",
-                    302: "302（4人间）",
-                }.get(room, f"{room}（未知类型）")
-                for room in v
-            ],
+        "room_numbers": (
+            "room_numbers",
+            lambda v: [ICE_HOTEL_ROOM_MAPPING.get(room, f"{room}（未知类型）") for room in v],
         ),
     }
 
