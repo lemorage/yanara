@@ -10,6 +10,7 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 from yanara.api.lark_api.lark_service import LarkTableService
 from yanara.configs.oyasumi_ice_hotel_mappings import ICE_HOTEL_ROOM_MAPPING
 from yanara.tools._internal.helpers import process_lark_data
+from yanara.tools.lark.calculate_room_charge import calculate_room_charge
 from yanara.tools.lark.finalize_order import finalize_order_for_room_booking
 from yanara.tools.lark.monthly_revenue import get_monthly_revenue_statistics
 from yanara.tools.lark.room_lookup import lookup_room_availability_by_date
@@ -160,6 +161,35 @@ def sample_finalization_order_raw_data():
 
 
 @pytest.fixture
+def sample_calculate_room_charge_raw_data():
+    """Fixture to provide sample data for calculating room charge."""
+    return {
+        "items": [
+            {
+                "fields": {
+                    "日期": 1731600000000,
+                    "浴缸双床房301价格": {"type": 2, "value": [14300.000000000002]},
+                    "淋浴双床房201价格": {"type": 2, "value": [11000]},
+                    "淋浴大床房202价格": {"type": 2, "value": [11000]},
+                },
+                "record_id": "recudMAyty8vVd",
+            },
+            {
+                "fields": {
+                    "日期": 1731686400000,
+                    "浴缸双床房301价格": {"type": 2, "value": [14300.000000000002]},
+                    "淋浴双床房201价格": {"type": 2, "value": [11000]},
+                    "淋浴大床房202价格": {"type": 2, "value": [11000]},
+                },
+                "record_id": "recudMAytyB2sH",
+            },
+        ],
+        "has_more": False,
+        "total": 2,
+    }
+
+
+@pytest.fixture
 def mocked_lark_service_for_room_availability(sample_room_availability_raw_data):
     mock_service = Mock()
     mock_service.fetch_records_within_date_range.return_value = sample_room_availability_raw_data
@@ -191,6 +221,13 @@ def mocked_lark_service_for_staging_order(sample_staging_order_raw_data):
 def mocked_lark_service_for_finalization_order(sample_finalization_order_raw_data):
     mock_service = Mock()
     mock_service.create_record.return_value = sample_finalization_order_raw_data
+    return mock_service
+
+
+@pytest.fixture
+def mocked_lark_service_for_calculate_room_charge(sample_calculate_room_charge_raw_data):
+    mock_service = Mock()
+    mock_service.fetch_records_within_date_range.return_value = sample_calculate_room_charge_raw_data
     return mock_service
 
 
@@ -398,6 +435,43 @@ def test_finalize_order_for_room_booking(mock_lark_service, mocked_lark_service_
         order_id=order_id,
         payment_amount=payment_amount,
     )
+
+    # Assert
+    assert result == expected_output, f"Expected {expected_output}, but got {result}"
+
+
+@pytest.mark.unit
+@patch("yanara.api.lark_api.lark_service.LarkTableService")
+def test_calculate_room_charge(mock_lark_service, mocked_lark_service_for_calculate_room_charge):
+    """Test the `calculate_room_charge` function."""
+
+    # Arrange
+    check_in_date = "2024-11-15"
+    check_out_date = "2024-11-17"
+    room_numbers = [301, 201, 202]
+    expected_output = {
+        "301（3人间）": {
+            "2024-11-15": 14300,
+            "2024-11-16": 14300,
+            "total": 28600,
+        },
+        "201（双人）": {
+            "2024-11-15": 11000,
+            "2024-11-16": 11000,
+            "total": 22000,
+        },
+        "202（大床）": {
+            "2024-11-15": 11000,
+            "2024-11-16": 11000,
+            "total": 22000,
+        },
+        "total_sum": 72600,
+    }
+
+    mock_lark_service.return_value = mocked_lark_service_for_calculate_room_charge
+
+    # Act
+    result = calculate_room_charge(check_in_date, check_out_date, room_numbers)
 
     # Assert
     assert result == expected_output, f"Expected {expected_output}, but got {result}"
