@@ -64,8 +64,10 @@ def calculate_room_charge(
     )
 
     key_map = {
-        "日期": ("日期", lambda v: timestamp_to_datetime(v)),
+        field_name: (field_name, lambda v: timestamp_to_datetime(v) if field_name == "日期" else round(v))
+        for field_name in field_names
     }
+    key_map["日期"] = ("日期", lambda v: timestamp_to_datetime(v))
 
     processed_data = process_lark_data(raw_data)
 
