@@ -34,6 +34,7 @@ def calculate_room_charge(
         }
     """
     from collections import defaultdict
+    import re
 
     from yanara.api.lark_api.lark_service import LarkTableService
     from yanara.api.lark_api.lark_table_model import LarkTableModel
@@ -73,7 +74,7 @@ def calculate_room_charge(
 
     data = standardize_stat_data(processed_data, key_map)
 
-    def process_room_data(data, selected_rooms):
+    def summarize_room_expenses(data, selected_rooms):
         result = defaultdict(lambda: {"total": 0})
         total_sum = 0
 
@@ -83,7 +84,7 @@ def calculate_room_charge(
             date = entry["日期"].split(" ")[0]
             for key, price in entry.items():
                 if key != "日期":
-                    room_number = int("".join(filter(str.isdigit, key.split("房")[1])))
+                    room_number = int(re.search(r"\d+", key.split("房")[1]).group())
                     result[room_number][date] = price
                     result[room_number]["total"] += price
                     total_sum += price
@@ -92,4 +93,4 @@ def calculate_room_charge(
         result["total_sum"] = total_sum
         return result
 
-    return process_room_data(data, room_numbers)
+    return summarize_room_expenses(data, room_numbers)
