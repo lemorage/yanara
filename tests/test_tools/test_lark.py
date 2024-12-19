@@ -8,9 +8,11 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 from yanara.api.lark_api.lark_service import LarkTableService
+from yanara.configs.oyasumi_ice_hotel_mappings import ICE_HOTEL_ROOM_MAPPING
 from yanara.tools._internal.helpers import process_lark_data
 from yanara.tools.lark.monthly_revenue import get_monthly_revenue_statistics
 from yanara.tools.lark.room_lookup import lookup_room_availability_by_date
+from yanara.tools.lark.staging_order import create_a_staging_order_for_booking_a_room
 from yanara.tools.lark.weekly_report import get_weekly_report_statistics
 
 
@@ -117,6 +119,25 @@ def sample_monthly_revenue_raw_data():
 
 
 @pytest.fixture
+def sample_staging_order_raw_data():
+    """Fixture to provide sample data for creating a staging order."""
+    return {
+        "record": {
+            "fields": {
+                "check_in_date": 1711900800000,
+                "check_out_date": 1711987200000,
+                "num_of_guests": 1,
+                "room_numbers": ["301（3人间）", "202（大床）"],
+                "user_contact": "hero@usa.com",
+                "user_id": "luigi",
+                "user_name": "Luigi Mangione",
+            },
+            "record_id": "recuwCy00EPLSx",
+        }
+    }
+
+
+@pytest.fixture
 def mocked_lark_service_for_room_availability(sample_room_availability_raw_data):
     mock_service = Mock()
     mock_service.fetch_records_within_date_range.return_value = sample_room_availability_raw_data
@@ -134,6 +155,13 @@ def mocked_lark_service_for_weekly_report(sample_weekly_raw_data):
 def mocked_lark_service_for_monthly_revenue(sample_monthly_revenue_raw_data):
     mock_service = Mock()
     mock_service.fetch_records_within_date_range.return_value = sample_monthly_revenue_raw_data
+    return mock_service
+
+
+@pytest.fixture
+def mocked_lark_service_for_staging_order(sample_staging_order_raw_data):
+    mock_service = Mock()
+    mock_service.create_record.return_value = sample_staging_order_raw_data
     return mock_service
 
 
@@ -247,6 +275,52 @@ def test_get_monthly_revenue_statistics(mock_lark_service, mocked_lark_service_f
 
     # Act
     result = get_monthly_revenue_statistics(start, end)
+
+    # Assert
+    assert result == expected_output, f"Expected {expected_output}, but got {result}"
+
+
+@pytest.mark.unit
+@patch("yanara.api.lark_api.lark_service.LarkTableService")
+def test_create_a_staging_order_for_booking_a_room(mock_lark_service, mocked_lark_service_for_staging_order):
+    """Test the `create_a_staging_order_for_booking_a_room` function."""
+
+    # Arrange
+    user_id = "luigi"
+    user_name = "Luigi Mangione"
+    user_contact = "hero@usa.com"
+    check_in_date = "2024-04-01"
+    check_out_date = "2024-04-02"
+    num_of_guests = 1
+    room_numbers = [301, 202]
+
+    expected_output = {
+        "record": {
+            "fields": {
+                "user_id": "luigi",
+                "user_name": "Luigi Mangione",
+                "user_contact": "hero@usa.com",
+                "check_in_date": 1711900800000,
+                "check_out_date": 1711987200000,
+                "num_of_guests": 1,
+                "room_numbers": ["301（3人间）", "202（大床）"],
+            },
+            "record_id": "recuwCy00EPLSx",
+        }
+    }
+
+    mock_lark_service.return_value = mocked_lark_service_for_staging_order
+
+    # Act
+    result = create_a_staging_order_for_booking_a_room(
+        user_id=user_id,
+        user_name=user_name,
+        user_contact=user_contact,
+        check_in_date=check_in_date,
+        check_out_date=check_out_date,
+        num_of_guests=num_of_guests,
+        room_numbers=room_numbers,
+    )
 
     # Assert
     assert result == expected_output, f"Expected {expected_output}, but got {result}"
