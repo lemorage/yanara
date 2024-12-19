@@ -10,6 +10,7 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 from yanara.api.lark_api.lark_service import LarkTableService
 from yanara.configs.oyasumi_ice_hotel_mappings import ICE_HOTEL_ROOM_MAPPING
 from yanara.tools._internal.helpers import process_lark_data
+from yanara.tools.lark.finalize_order import finalize_order_for_room_booking
 from yanara.tools.lark.monthly_revenue import get_monthly_revenue_statistics
 from yanara.tools.lark.room_lookup import lookup_room_availability_by_date
 from yanara.tools.lark.staging_order import create_a_staging_order_for_booking_a_room
@@ -138,6 +139,27 @@ def sample_staging_order_raw_data():
 
 
 @pytest.fixture
+def sample_finalization_order_raw_data():
+    """Fixture to provide sample data for finalizing an order."""
+    return {
+        "record": {
+            "fields": {
+                "Channel": ["booking"],
+                "CI": 1735113600000,
+                "CO": 1735268400000,
+                "订单金额": 25000.2,
+                "房间号": ["201（双人）"],
+                "平台订单号": "423456789",
+                "收款方式": ["平台收款"],
+                "总人数": 2,
+                "代表者名前": "Luigi Mangione",
+            },
+            "record_id": "recuwCy00EPLSx",
+        }
+    }
+
+
+@pytest.fixture
 def mocked_lark_service_for_room_availability(sample_room_availability_raw_data):
     mock_service = Mock()
     mock_service.fetch_records_within_date_range.return_value = sample_room_availability_raw_data
@@ -162,6 +184,13 @@ def mocked_lark_service_for_monthly_revenue(sample_monthly_revenue_raw_data):
 def mocked_lark_service_for_staging_order(sample_staging_order_raw_data):
     mock_service = Mock()
     mock_service.create_record.return_value = sample_staging_order_raw_data
+    return mock_service
+
+
+@pytest.fixture
+def mocked_lark_service_for_finalization_order(sample_finalization_order_raw_data):
+    mock_service = Mock()
+    mock_service.create_record.return_value = sample_finalization_order_raw_data
     return mock_service
 
 
@@ -320,6 +349,54 @@ def test_create_a_staging_order_for_booking_a_room(mock_lark_service, mocked_lar
         check_out_date=check_out_date,
         num_of_guests=num_of_guests,
         room_numbers=room_numbers,
+    )
+
+    # Assert
+    assert result == expected_output, f"Expected {expected_output}, but got {result}"
+
+
+@pytest.mark.unit
+@patch("yanara.api.lark_api.lark_service.LarkTableService")
+def test_finalize_order_for_room_booking(mock_lark_service, mocked_lark_service_for_finalization_order):
+    """Test the `finalize_order_for_room_booking` function."""
+
+    # Arrange
+    user_name = "Luigi Mangione"
+    check_in_date = "2024-12-25"
+    check_out_date = "2024-12-27"
+    num_of_guests = 2
+    room_numbers = [201]
+    order_id = "423456789"
+    payment_amount = 25000.2
+
+    expected_output = {
+        "record": {
+            "fields": {
+                "代表者名前": "Luigi Mangione",
+                "CI": 1735113600000,
+                "CO": 1735268400000,
+                "总人数": 2,
+                "房间号": ["201（双人）"],
+                "平台订单号": "423456789",
+                "订单金额": 25000.2,
+                "Channel": ["booking"],
+                "收款方式": ["平台收款"],
+            },
+            "record_id": "recuwCy00EPLSx",
+        }
+    }
+
+    mock_lark_service.return_value = mocked_lark_service_for_finalization_order
+
+    # Act
+    result = finalize_order_for_room_booking(
+        user_name=user_name,
+        check_in_date=check_in_date,
+        check_out_date=check_out_date,
+        num_of_guests=num_of_guests,
+        room_numbers=room_numbers,
+        order_id=order_id,
+        payment_amount=payment_amount,
     )
 
     # Assert
