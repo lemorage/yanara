@@ -27,7 +27,7 @@ def create_room_booking_agent():
 
     return client.create_agent(
         name="room_booking_agent",
-        tools=[create_order_tool.name],
+        tool_ids=[create_order_tool.id],
         memory=ChatMemory(human="My name is Sarah", persona=room_booking_agent_persona),
     )
 
@@ -51,7 +51,7 @@ def create_room_booking_finalization_agent():
 
     return client.create_agent(
         name="room_booking_finalization_agent",
-        tools=[finalize_order_tool.name],
+        tool_ids=[finalize_order_tool.id],
         memory=ChatMemory(
             human="My name is Sarah",
             persona=finalization_agent_persona,
