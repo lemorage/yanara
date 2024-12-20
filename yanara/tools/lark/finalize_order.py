@@ -15,8 +15,8 @@ def finalize_order_for_room_booking(
 
     Args:
         user_name (str): The full name of the user making the booking.
-        check_in_date (str): The check-in date in 'YYYY-MM-DD HH:MM:SS' format. If no time is provided, it defaults to '16:00:00'.
-        check_out_date (str): The check-out date in 'YYYY-MM-DD HH:MM:SS' format. If no time is provided, it defaults to '11:00:00'.
+        check_in_date (str): The check-in date in 'YYYY-MM-DD HH:MM:SS' format. If no time is provided, it defaults to '15:00:00'.
+        check_out_date (str): The check-out date in 'YYYY-MM-DD HH:MM:SS' format. If no time is provided, it defaults to '10:00:00'.
         num_of_guests (int): The number of guests staying in the booking.
         room_numbers (list[int]): A list of room numbers being booked. Each number corresponds to a unique room.
         order_id (str): The platform-specific order ID. Determines the booking channel (e.g., Booking.com, Airbnb).

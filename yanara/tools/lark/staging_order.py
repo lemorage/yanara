@@ -54,7 +54,7 @@ def create_a_staging_order_for_booking_a_room(
     from yanara.api.lark_api.lark_table_model import LarkTableModel
     from yanara.configs.oyasumi_ice_hotel_mappings import ICE_HOTEL_ROOM_MAPPING
     from yanara.tools._internal.helpers import standardize_stat_data
-    from yanara.util.date import datetime_to_timestamp
+    from yanara.util.date import adjust_timestamp, datetime_to_timestamp
 
     table = LarkTableModel(table_id="tblEdrAN50PA6p0e", view_id="vewuCkYKc9", primary_key="user_id")
     lark_service = LarkTableService(app_token="RPMLbE4UXa26N9s8867cHlebnrb", table_model=table)
@@ -63,8 +63,8 @@ def create_a_staging_order_for_booking_a_room(
         "user_id": user_id,
         "user_name": user_name,
         "user_contact": user_contact,
-        "check_in_date": datetime_to_timestamp(check_in_date),
-        "check_out_date": datetime_to_timestamp(check_out_date),
+        "check_in_date": adjust_timestamp(datetime_to_timestamp(check_in_date), hours=-1),
+        "check_out_date": adjust_timestamp(datetime_to_timestamp(check_out_date), hours=-1),
         "num_of_guests": num_of_guests,
         "room_numbers": room_numbers,
         "censor": "Waiting for approval",
