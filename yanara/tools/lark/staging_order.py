@@ -27,7 +27,6 @@ def create_a_staging_order_for_booking_a_room(
 
     Example:
         >>> create_a_staging_order_for_booking_a_room(
-        ...     self=None,
         ...     user_id="luigi",
         ...     user_name="Luigi Mangione",
         ...     user_contact="hero@usa.com",
@@ -57,7 +56,7 @@ def create_a_staging_order_for_booking_a_room(
     from yanara.tools._internal.helpers import standardize_stat_data
     from yanara.util.date import datetime_to_timestamp
 
-    table = LarkTableModel(table_id="tblWyF55DDspX0D3", view_id="vewzTTaQcw", primary_key="user_id")
+    table = LarkTableModel(table_id="tblEdrAN50PA6p0e", view_id="vewuCkYKc9", primary_key="user_id")
     lark_service = LarkTableService(app_token="RPMLbE4UXa26N9s8867cHlebnrb", table_model=table)
 
     fields = {
@@ -68,6 +67,7 @@ def create_a_staging_order_for_booking_a_room(
         "check_out_date": datetime_to_timestamp(check_out_date),
         "num_of_guests": num_of_guests,
         "room_numbers": room_numbers,
+        "censor": "Waiting for approval",
     }
 
     key_map = {
