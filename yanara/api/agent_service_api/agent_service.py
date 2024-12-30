@@ -92,6 +92,6 @@ class AgentServiceClient:
 
         url = f"{self.get_agent_service_base_path()}/integration/send"
         options = {"method": "POST"}
-        axios_options = {"httpsAgent": None, "proxy": False}
+        axios_options = {"timeout": 60, "proxy": None}
 
         return await request(url, data=data, options=options, axios_options=axios_options)
