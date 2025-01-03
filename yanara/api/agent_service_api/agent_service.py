@@ -1,7 +1,9 @@
 import os
 from typing import Any
 
-from yanara.util.reqwest import request
+import httpx  # For the synchronous version
+
+from yanara.util.reqwest import request  # For the asynchronous version
 
 
 class AgentServiceClient:
@@ -22,8 +24,11 @@ class AgentServiceClient:
     get_agent_service_base_path() -> str
         Determines the base URL for the agent service depending on the environment.
 
-    send_wecom_message(chat_id: str, mention_id: Optional[str], content: str) -> Any
-        Sends a message to a specified chat with the provided content and mention ID (optional).
+    send_wecom_message(chat_id: str, content: str, mention_id: str = "") -> Any
+        Asynchronously sends a message to a specified chat.
+
+    send_wecom_message_sync(chat_id: str, content: str, mention_id: str = "") -> Any
+        Synchronously sends a message to a specified chat.
     """
 
     # Mapping of WeCom account names to bot IDs
@@ -63,20 +68,26 @@ class AgentServiceClient:
         else:
             return "http://127.0.0.1:4050"
 
-    async def send_wecom_message(self, chat_id: str, content: str, mention_id: str | None = "") -> Any:
-        """Send a message from the WeCom accounts through the `integration/send` endpoint.
+    async def send_wecom_message(self, chat_id: str, content: str, mention_id: str = "") -> Any:
+        """
+        Asynchronously send a message from the WeCom accounts through the `integration/send` endpoint.
 
         Parameters
         ----------
         chat_id : str
-            The wechat user for the chat to send the message to.
+            The WeChat user for the chat to send the message to.
 
         content : str
             The content of the message to send.
 
-        mention_id : Optional[str], optional
+        mention_id : str, optional
             The WeChat account IDs to mention in the message. If not provided,
             no user is mentioned. Default is an empty string (no mention).
+
+        Returns
+        -------
+        Any
+            The JSON response from the server.
         """
         if not chat_id or not content:
             raise ValueError("Both chat_id and content must be provided.")
@@ -95,3 +106,52 @@ class AgentServiceClient:
         axios_options = {"timeout": 60, "proxy": None}
 
         return await request(url, data=data, options=options, axios_options=axios_options)
+
+    def send_wecom_message_sync(self, chat_id: str, content: str, mention_id: str = "") -> Any:
+        """
+        Synchronously send a message from the WeCom accounts through the `integration/send` endpoint.
+
+        Parameters
+        ----------
+        chat_id : str
+            The WeChat user for the chat to send the message to.
+
+        content : str
+            The content of the message to send.
+
+        mention_id : str, optional
+            The WeChat account IDs to mention in the message. If not provided,
+            no user is mentioned. Default is an empty string (no mention).
+
+        Returns
+        -------
+        Any
+            The JSON response from the server.
+        """
+        if not chat_id or not content:
+            raise ValueError("Both chat_id and content must be provided.")
+
+        data = {
+            "message": {
+                "chat_id": chat_id,
+                "mention_id": mention_id,
+                "bot_wxid": self.wecom_id,
+                "replyContent": content,
+            }
+        }
+
+        url = f"{self.get_agent_service_base_path()}/integration/send"
+        try:
+            with httpx.Client(timeout=60) as client:
+                response = client.post(url, json=data)
+                response.raise_for_status()
+                return response.json()
+        except httpx.HTTPStatusError as e:
+            print(f"HTTP error {e.response.status_code}: {e.response.text}")
+            raise
+        except httpx.RequestError as e:
+            print(f"Request error: {e}")
+            raise
+        except Exception as e:
+            print(f"Unexpected error occurred: {e}")
+            raise
